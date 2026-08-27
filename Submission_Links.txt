@@ -5,7 +5,7 @@ Member 3 Name and ID: Caleb Abakah Mensah, 22424188
 Project Option Code: DUEL-2
 Project Title: Dynamic Job Scheduling with a Dueling Deep Q-Network
 YouTube Demonstration Link:
-GitHub Repository URL (public):
+GitHub Repository URL (public): https://github.com/Gaanaman/ug-dscd614-duel2-dynamic-job-scheduling
 Final Commit SHA:
 Random Seeds Used: 0, 1, 2 (training); 9000-9029 (held-out evaluation instances)
 Environment and Version:
