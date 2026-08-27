@@ -1,0 +1,6 @@
+# Reward weights. See docs/mdp_spec.md section 5 for the equation.
+alpha: 1.0     # queue waiting cost
+beta: 0.3      # machine idleness
+gamma_c: 1.0   # weighted completion
+delta: 2.0     # weighted tardiness
+# Normaliser Z = n_jobs * mean(processing_time), computed at runtime.

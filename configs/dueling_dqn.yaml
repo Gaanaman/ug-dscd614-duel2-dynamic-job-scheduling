@@ -1,0 +1,25 @@
+# Agent configuration. Held IDENTICAL across seeds -- a per-seed configuration
+# invalidates the comparison.
+algorithm: dueling_dqn
+double_q: false           # decide and state it; dueling and double are independent
+
+network:
+  hidden: [256, 256]
+  activation: relu
+
+optimiser: adam
+learning_rate: 0.0001
+batch_size: 128
+buffer_size: 200000
+learning_starts: 10000
+train_frequency: 4
+target_update_interval: 1000
+gamma: 0.99               # justified in docs/mdp_spec.md section 7
+grad_clip: 10.0
+
+epsilon:
+  start: 1.0
+  end: 0.05
+  decay_fraction: 0.3     # of total_timesteps
+
+total_timesteps: null     # TODO -- cut this before cutting seeds if compute is short

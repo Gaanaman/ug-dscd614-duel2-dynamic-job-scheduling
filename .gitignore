@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.ipynb_checkpoints/
+.DS_Store
+.pytest_cache/
+*.egg-info/
+
+# Large datasets are never committed -- provide a script that obtains them.
+data/
+
+# logs/ and figures/ ARE committed. Every figure in the report must trace back
+# to a committed log, so do not add them here.

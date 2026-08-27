@@ -1,0 +1,11 @@
+Group Code: GROUP-11
+Member 1 Name and ID: Kyeremeh Faithful, 22424515
+Member 2 Name and ID: Daniel K. Adotey, 22424924
+Member 3 Name and ID: Caleb Abakah Mensah, 22424188
+Project Option Code: DUEL-2
+Project Title: Dynamic Job Scheduling with a Dueling Deep Q-Network
+YouTube Demonstration Link:
+GitHub Repository URL (public):
+Final Commit SHA:
+Random Seeds Used: 0, 1, 2 (training); 9000-9029 (held-out evaluation instances)
+Environment and Version:

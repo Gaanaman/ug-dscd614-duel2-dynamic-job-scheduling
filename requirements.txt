@@ -1,0 +1,11 @@
+# Pinned exact versions. Regenerate with `pip freeze > requirements.txt` once the
+# environment is verified, and do not relax these before marks are released --
+# the rubric requires a pinned dependency specification and a README that
+# reproduces the headline result from a clean environment.
+gymnasium==1.0.0
+numpy==2.1.3
+torch==2.5.1
+pyyaml==6.0.2
+pandas==2.2.3
+matplotlib==3.9.2
+pytest==8.3.4

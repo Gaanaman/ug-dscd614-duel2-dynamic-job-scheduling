@@ -1,0 +1,15 @@
+# Environment configuration. Frozen before training begins.
+n_machines: 5
+n_jobs: 50
+queue_window: 10          # K -- drives obs dim (5K+3M+4=69) and action count (K*M+1=51)
+max_epochs_factor: 4      # T_max = factor * n_jobs
+
+# TODO resolve before freezing -- see docs/mdp_spec.md section 10
+arrival_rate: null        # lambda; set so the system is loaded but stable
+horizon: null             # H; time normalisation constant
+processing_time:
+  distribution: null      # e.g. uniform / lognormal, with parameters
+weights:
+  distribution: null      # priority weight distribution
+deadline_tightness: null  # multiplier over processing time
+machine_speeds: null      # null => identical; a list => heterogeneous

@@ -1,0 +1,7 @@
+# Evaluation configuration. Fixed before any result exists.
+n_episodes: 30
+instance_seeds: [9000, 9030]   # half-open range, held out from training
+epsilon: 0.0                   # exploration disabled
+deterministic: true
+policies: [dueling_dqn, FCFS, SJF, RoundRobin]
+seeds: [0, 1, 2]
