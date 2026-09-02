@@ -83,7 +83,14 @@ completed `/ N`, arrival rate `λ` normalised by service capacity.
 With `K = 10, M = 5` the space has 51 actions.
 
 **Action masking.** A mask `μ ∈ {0,1}^{KM+1}` is emitted with every observation.
-`μ[kM + m] = 1` iff slot `k` is occupied and machine `m` is idle. The no-op is always valid.
+`μ[kM + m] = 1` iff slot `k` is occupied and machine `m` is idle.
+
+The no-op is valid only when a future event exists — a running job that will complete, or a job
+that has not yet arrived. Without that condition the agent could select the no-op forever in a
+state where nothing else can happen, and simulated time would never advance. Because a decision
+epoch requires an idle machine and a pending job, at least one assignment is always available, so
+restricting the no-op can never leave the action set empty.
+
 The mask is applied in three places and all three are required for correctness:
 
 1. ε-greedy exploration samples uniformly from valid actions only.
@@ -137,12 +144,15 @@ Stated separately, as the instructions require.
 
 `γ = 0.99`.
 
-An episode with `N = 50` jobs and `M = 5` machines runs roughly 60–90 decision epochs including
-no-ops. The effective horizon `1/(1−γ) = 100` epochs therefore covers a full episode: the agent
+Measured over the 30 held-out instances, an episode runs **50 decision epochs** under every
+baseline — one per job, with no no-ops taken, since a dispatch rule always dispatches when it can.
+An agent that uses the no-op will run longer, bounded by `T_max = 200`.
+
+The effective horizon `1/(1−γ) = 100` epochs therefore covers a full episode twice over: the agent
 can see the tardiness consequence of an early dispatch decision at the end of the run. A shorter
-`γ = 0.95` (horizon 20) would truncate that credit assignment; `γ = 0.999` adds variance without
-extending reach beyond the episode. Measure the actual mean episode length in epochs before
-committing this number, and quote the measurement in the report.
+`γ = 0.95` (horizon 20) would truncate that credit assignment, and with 50-epoch episodes it would
+hide the back half of the run from the front half. `γ = 0.999` adds variance without extending
+reach beyond the episode.
 
 ## 8. Does the Markov property hold?
 
