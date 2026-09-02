@@ -12,6 +12,8 @@ SEEDS=(0 1 2)
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+mkdir -p logs/train logs/eval figures models
+
 echo "==> Environment check"
 python -c "import gymnasium, torch, numpy; print(gymnasium.__version__, torch.__version__, numpy.__version__)"
 

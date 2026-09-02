@@ -66,8 +66,10 @@ configs/       env, agent and evaluation configuration
 docs/          MDP specification, protocol, hyperparameters
 scripts/       train, evaluate, make_figures, run_all
 tests/         Gymnasium API conformance, mask correctness, reward and metric tests
-logs/          raw run logs — every figure traces back here
 ```
+
+`run_all.sh` creates `logs/`, `figures/`, and `models/` on first run. Raw run logs are
+committed once they exist — every figure traces back to one.
 
 ## Documents
 
