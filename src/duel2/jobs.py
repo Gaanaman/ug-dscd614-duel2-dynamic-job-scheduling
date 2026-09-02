@@ -2,11 +2,11 @@
 
 Owner: Faithful
 
-Instances are generated from a dedicated RNG stream so that the *instances* an
-agent sees are independent of the *agent's* stochasticity. See
-docs/experimental_protocol.md: training draws from ``seed + 1000``, evaluation
-uses the fixed held-out range 9000-9029, and the harness asserts the two never
-overlap.
+Instances come from a dedicated RNG stream so the *instances* an agent sees are
+independent of the *agent's* stochasticity. See docs/experimental_protocol.md:
+training draws from ``seed + 1000``, evaluation uses the fixed held-out range
+9000-9029, and ``assert_held_out`` makes an accidental overlap fail loudly
+rather than silently inflating the result.
 """
 
 from __future__ import annotations
@@ -32,13 +32,31 @@ class Job:
 def generate_instance(instance_seed: int, cfg) -> list[Job]:
     """Generate one episode's job stream.
 
-    Arrivals are a Poisson process with rate ``cfg.arrival_rate``. Deadlines are
-    set from a tightness factor over processing time so that a non-trivial
-    fraction of jobs is at risk under a naive policy — if every deadline is
-    comfortably met, the tardiness term in the reward carries no signal and the
-    baselines are already near-optimal.
+    Arrivals are a Poisson process with rate ``cfg.arrival_rate``, shifted so the
+    first job arrives at t=0. Deadlines are a tightness factor over processing
+    time, which keeps a job's deadline proportional to its own size instead of
+    penalising long jobs by construction.
     """
-    raise NotImplementedError("TODO")
+    rng = np.random.default_rng(instance_seed)
+    n = cfg.n_jobs
+
+    gaps = rng.exponential(1.0 / cfg.arrival_rate, size=n)
+    arrivals = np.cumsum(gaps)
+    arrivals -= arrivals[0]
+
+    processing = rng.integers(
+        cfg.processing_time_min, cfg.processing_time_max + 1, size=n
+    ).astype(float)
+    weights = rng.choice(cfg.weight_values, size=n, p=cfg.weight_probs)
+    tightness = rng.uniform(
+        cfg.deadline_tightness_min, cfg.deadline_tightness_max, size=n
+    )
+    deadlines = arrivals + processing * tightness
+
+    return [
+        Job(i, float(a), float(p), float(w), float(d))
+        for i, (a, p, w, d) in enumerate(zip(arrivals, processing, weights, deadlines))
+    ]
 
 
 def assert_held_out(instance_seed: int) -> None:

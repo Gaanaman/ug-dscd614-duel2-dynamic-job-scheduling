@@ -33,6 +33,15 @@ the same code path, and regenerates every figure:
 bash scripts/run_all.sh
 ```
 
+Before training, confirm the instance distribution still has headroom for the agent:
+
+```bash
+python scripts/check_load.py
+```
+
+It runs all three baselines and warns if the arrival process is setting the makespan, if the
+baselines sit within noise of each other, or if the deadline miss rate has saturated.
+
 Individual stages:
 
 ```bash

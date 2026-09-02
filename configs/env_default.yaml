@@ -1,15 +1,39 @@
 # Environment configuration. Frozen before training begins.
-n_machines: 5
-n_jobs: 50
-queue_window: 10          # K -- drives obs dim (5K+3M+4=69) and action count (K*M+1=51)
-max_epochs_factor: 4      # T_max = factor * n_jobs
+#
+# Load: capacity = sum(machine_speeds) / mean(processing_time) = 4.85 / 6 = 0.808
+# jobs per time unit. arrival_rate 1.0 deliberately over-subscribes the bank
+# (rho = 1.24), so a backlog builds during the arrival phase and then drains.
+# That transient overload is what makes dispatch order determine the outcome.
+#
+# Chosen by sweeping lambda and measuring baseline separation. At lambda 0.55
+# the makespan equalled N/lambda, meaning the arrival process set the finish
+# time and the scheduler was irrelevant. At lambda 1.0 the makespan is 69
+# against an arrival bound of 50, and the three baselines separate:
+#
+#   policy       wait   missed   weighted tardiness
+#   FCFS         5.40    0.459   207
+#   SJF          3.98    0.257   147
+#   RoundRobin   4.54    0.361   128
+#
+# No baseline dominates -- SJF wins on miss rate, Round Robin on tardiness --
+# so there is a genuine trade-off for the agent to find rather than one rule to
+# copy. Above lambda 1.5 the system saturates and the miss rate exceeds 0.7,
+# which flattens that structure.
+#
+# Re-run scripts/check_load.py after changing any of these.
 
-# TODO resolve before freezing -- see docs/mdp_spec.md section 10
-arrival_rate: null        # lambda; set so the system is loaded but stable
-horizon: null             # H; time normalisation constant
-processing_time:
-  distribution: null      # e.g. uniform / lognormal, with parameters
-weights:
-  distribution: null      # priority weight distribution
-deadline_tightness: null  # multiplier over processing time
-machine_speeds: null      # null => identical; a list => heterogeneous
+n_machines: 5
+machine_speeds: [1.0, 1.0, 1.25, 0.8, 0.8]   # heterogeneous: machine choice matters
+n_jobs: 50
+queue_window: 10          # K -- obs dim 5K+3M+4 = 69, action count K*M+1 = 51
+
+arrival_rate: 1.0         # lambda, Poisson arrivals (rho = 1.24)
+processing_time_min: 2    # discrete uniform on [min, max], mean 6
+processing_time_max: 10
+weight_values: [1.0, 2.0, 5.0]
+weight_probs: [0.6, 0.3, 0.1]
+deadline_tightness_min: 1.3   # d_j = a_j + p_j * U(min, max)
+deadline_tightness_max: 2.5
+
+horizon: 120.0            # H -- time normalisation constant; E[span] = N/lambda = 91
+max_epochs_factor: 4      # T_max = factor * n_jobs

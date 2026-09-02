@@ -24,20 +24,46 @@ from __future__ import annotations
 import numpy as np
 
 
-def build_mask(pending_slots, machines, n_machines: int, queue_window: int) -> np.ndarray:
-    """Return a boolean mask of shape (queue_window * n_machines + 1,).
+def build_mask(
+    n_visible_jobs: int,
+    idle_machines: list[bool],
+    queue_window: int,
+    future_event_exists: bool,
+) -> np.ndarray:
+    """Boolean mask of shape ``(queue_window * n_machines + 1,)``.
 
-    ``mask[k * n_machines + m]`` is True iff slot k is occupied and machine m is
-    idle. The final entry (the no-op) is always True.
+    ``mask[k * n_machines + m]`` is True iff slot k holds a job and machine m is
+    idle.
+
+    The final entry is the no-op. It is valid only when a future event exists --
+    a running job that will complete, or a job that has not yet arrived. Without
+    that condition an agent could no-op forever in a state where nothing else
+    can happen, and simulated time would never advance.
     """
-    raise NotImplementedError("TODO")
+    n_machines = len(idle_machines)
+    mask = np.zeros(queue_window * n_machines + 1, dtype=bool)
+
+    occupied = np.zeros(queue_window, dtype=bool)
+    occupied[:n_visible_jobs] = True
+    mask[: queue_window * n_machines] = np.outer(
+        occupied, np.asarray(idle_machines, dtype=bool)
+    ).ravel()
+    mask[-1] = future_event_exists
+
+    return mask
 
 
-def decode_action(action: int, n_machines: int) -> tuple[int, int] | None:
+def decode_action(action: int, n_machines: int, queue_window: int) -> tuple[int, int] | None:
     """Map a flat action index to ``(slot, machine)``, or None for the no-op."""
-    raise NotImplementedError("TODO")
+    if action == queue_window * n_machines:
+        return None
+    if not 0 <= action < queue_window * n_machines:
+        raise ValueError(f"action {action} out of range for {queue_window}x{n_machines}")
+    return divmod(action, n_machines)
 
 
 def apply_mask(q_values: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """Set invalid entries to -inf so argmax and max ignore them."""
-    raise NotImplementedError("TODO")
+    out = np.array(q_values, dtype=np.float64, copy=True)
+    out[~mask] = -np.inf
+    return out

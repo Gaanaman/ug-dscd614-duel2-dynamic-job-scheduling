@@ -193,13 +193,49 @@ learns congestion once in `V(s)` and lets the advantage stream model only the di
 over *valid* actions only. Averaging over all `KM+1` entries, including the masked ones, leaks
 arbitrary values from unreachable actions into `V(s)`. Test this in `tests/test_mask.py`.
 
-## 10. Open decisions
+## 10. Resolved parameters
 
-Resolve these before the environment is frozen, and record the resolution here.
+Frozen on 27 August after a load sweep. `scripts/check_load.py` re-runs the checks that
+justified them; run it after changing any value here.
 
-- [ ] `M`, `N`, `K`, `λ` for the headline configuration
-- [ ] Are machines identical (`s_m = 1` for all `m`) or heterogeneous? Heterogeneous makes the
-      assignment decision genuinely non-trivial and strengthens the case against Round Robin
-- [ ] Deadline generation rule — a tightness factor over `p_j` is the usual choice
-- [ ] `H` and `p_max`, `w_max` normalisation constants
-- [ ] Whether to include a public job-shop benchmark instance as a secondary evaluation
+| Parameter | Value | Basis |
+|---|---|---|
+| machines `M` | 5, speeds `[1.0, 1.0, 1.25, 0.8, 0.8]` | heterogeneous, so *which* machine is a real choice and Round Robin has a way to lose |
+| jobs `N` | 50 | gives 60-90 decision epochs, which the discount in §7 is sized against |
+| queue window `K` | 10 | observation 69, actions 51 |
+| arrival rate `λ` | 1.0 | see below |
+| processing time `p_j` | discrete uniform [2, 10] | mean 6, so `p_max = 10` |
+| weight `w_j` | `{1: 0.6, 2: 0.3, 5: 0.1}` | mostly routine work, occasional urgent job, so the weighted terms carry signal |
+| deadline `d_j` | `a_j + p_j · U(1.3, 2.5)` | proportional to the job's own size, so long jobs are not penalised by construction |
+| horizon `H` | 120 | above the observed makespan of ~69 |
+| `T_max` | `4N = 200` | truncation limit; episodes terminate well inside it |
+
+**Why `λ = 1.0`.** Service capacity is `Σ s_m / p̄ = 4.85 / 6 = 0.808` jobs per time unit, so
+`λ = 1.0` deliberately over-subscribes the bank at `ρ = 1.24`. A backlog builds during the
+arrival phase and then drains, and that transient overload is what makes dispatch order
+determine the outcome.
+
+The first attempt used `λ = 0.55` (`ρ = 0.68`) and failed the check: makespan came out at 98
+against an arrival bound `N/λ` of 91, meaning the arrival process was setting the finish time and
+the scheduler was close to irrelevant. Average waiting time was 0.5 time units and the three
+baselines were within noise of each other.
+
+At `λ = 1.0`, makespan is 69 against an arrival bound of 50, and the baselines separate over 30
+held-out instances:
+
+| Policy | Makespan | Avg. waiting | Utilisation | Missed deadlines | Weighted tardiness |
+|---|---|---|---|---|---|
+| FCFS | 69.06 | 5.54 | 0.895 | 0.465 | 212.29 |
+| SJF | 69.65 | 4.08 | 0.887 | 0.256 | 136.36 |
+| Round Robin | 69.91 | 4.59 | 0.886 | 0.361 | 130.49 |
+
+**No baseline dominates.** SJF has the lowest miss rate; Round Robin has the lowest weighted
+tardiness. The agent therefore has a genuine trade-off to find rather than a single rule to copy,
+and the report can say which corner of that frontier the learned policy lands in. Above `λ = 1.5`
+the system saturates past a 0.7 miss rate and that structure flattens out.
+
+## 11. Still open
+
+- [ ] Total training timesteps — set from a smoke run, not in advance
+- [ ] Whether double-Q sits on top of dueling (they are independent; state which is used)
+- [ ] Whether to add a public job-shop benchmark instance as a secondary evaluation

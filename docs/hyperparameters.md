@@ -18,16 +18,17 @@ and justified — the instructions require it explicitly.
 | Parameter | Value | Note |
 |---|---|---|
 | machines `M` | 5 | |
+| machine speeds `s_m` | `[1.0, 1.0, 1.25, 0.8, 0.8]` | heterogeneous |
 | jobs per episode `N` | 50 | |
 | visible job slots `K` | 10 | queue window; drives observation and action size |
-| arrival rate `λ` | *(tbd)* | set so the system is loaded but stable |
-| processing time distribution | *(tbd)* | |
-| deadline tightness | *(tbd)* | |
-| machine speeds `s_m` | *(tbd)* | identical or heterogeneous — see `mdp_spec.md` §10 |
-| horizon `H` | *(tbd)* | time normalisation constant |
+| arrival rate `λ` | 1.0 | `ρ = 1.24`; chosen by load sweep, see `mdp_spec.md` §10 |
+| processing time | discrete uniform [2, 10] | mean 6 |
+| priority weights | `{1: 0.6, 2: 0.3, 5: 0.1}` | |
+| deadline | `a_j + p_j · U(1.3, 2.5)` | |
+| horizon `H` | 120 | time normalisation constant |
 | observation dimension | 69 | `5K + 3M + 4` |
 | action space | `Discrete(51)` | `K·M + 1` |
-| `T_max` | `4N` | truncation limit |
+| `T_max` | `4N = 200` | truncation limit |
 
 ## Reward weights
 
