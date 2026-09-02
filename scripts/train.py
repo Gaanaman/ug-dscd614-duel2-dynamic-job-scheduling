@@ -1,6 +1,6 @@
 """Train the dueling DQN agent for one seed.
 
-Owner: Daniel K. Adotey (22424924)
+Owner: Daniel
 
     python scripts/train.py --config configs/dueling_dqn.yaml \
         --env-config configs/env_default.yaml --seed 0

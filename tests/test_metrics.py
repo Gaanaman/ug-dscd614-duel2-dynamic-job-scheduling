@@ -1,6 +1,6 @@
 """Metrics.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
 A metric bug invalidates every number in the report. Verify against a schedule
 small enough to work out on paper: 3 jobs, 2 machines, known arrival and

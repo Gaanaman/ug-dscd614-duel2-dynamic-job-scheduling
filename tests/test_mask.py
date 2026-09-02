@@ -1,6 +1,6 @@
 """Action mask correctness.
 
-Owner: Kyeremeh Faithful (22424515)
+Owner: Faithful
 
 These are the highest-value tests in the repository. A wrong mask does not
 crash; it silently trains a policy shaped by actions that cannot be taken, and

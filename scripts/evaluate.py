@@ -1,6 +1,6 @@
 """Evaluate the agent and every baseline under identical conditions.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
     python scripts/evaluate.py --config configs/eval.yaml
 

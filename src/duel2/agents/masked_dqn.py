@@ -1,6 +1,6 @@
 """Masked DQN training loop.
 
-Owner: Daniel K. Adotey (22424924)
+Owner: Daniel
 
 Attribution: if this is adapted from a reference implementation (CleanRL's
 dqn.py is the recommended base -- single file, transparent, easy to modify), add

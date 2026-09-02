@@ -1,6 +1,6 @@
 """Structured run logging.
 
-Owner: Daniel K. Adotey (22424924)
+Owner: Daniel
 
 Everything plotted in the report must come out of these files, so log more than
 feels necessary now -- re-running training on 3 September to recover a column is

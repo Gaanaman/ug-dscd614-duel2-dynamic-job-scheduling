@@ -1,6 +1,6 @@
 """Regenerate every figure in the report from committed logs.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
     python scripts/make_figures.py --logs logs/ --out figures/
 

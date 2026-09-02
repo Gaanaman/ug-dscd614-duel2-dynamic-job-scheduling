@@ -1,6 +1,6 @@
 """FCFS, SJF and Round Robin dispatch rules.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
 One of these is the required baseline; all three are implemented because the
 marginal cost is an afternoon and three baselines make the comparison far more

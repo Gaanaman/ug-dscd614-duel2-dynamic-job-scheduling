@@ -1,6 +1,6 @@
 """Observation construction and normalisation.
 
-Owner: Kyeremeh Faithful (22424515)
+Owner: Faithful
 
 Layout of the 5K + 3M + 4 vector (K = queue window, M = machines):
 

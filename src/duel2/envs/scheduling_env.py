@@ -1,6 +1,6 @@
 """Gymnasium environment for dynamic job scheduling on parallel machines.
 
-Owner: Kyeremeh Faithful (22424515)
+Owner: Faithful
 
 Formulation reference: docs/mdp_spec.md. Keep the two in sync — the report is
 marked against the specification, and a divergence between spec and code is the

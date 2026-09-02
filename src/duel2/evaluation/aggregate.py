@@ -1,6 +1,6 @@
 """Cross-seed aggregation.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
 Rubric: "Report the mean and the variation across seeds for every metric. A
 single number without a measure of spread is not accepted." And: "Do not report

@@ -1,6 +1,6 @@
 """Synthetic job instance generation.
 
-Owner: Kyeremeh Faithful (22424515)
+Owner: Faithful
 
 Instances are generated from a dedicated RNG stream so that the *instances* an
 agent sees are independent of the *agent's* stochasticity. See

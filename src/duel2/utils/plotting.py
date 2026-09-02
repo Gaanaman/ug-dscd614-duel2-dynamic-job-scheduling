@@ -1,6 +1,6 @@
 """Plot helpers.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
 Shared style so every figure in the report looks like it came from one project.
 Training curves show the mean across seeds with a shaded spread -- never a

@@ -1,6 +1,6 @@
 """Evaluation harness.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
 One entry point runs any Policy -- the trained agent or any baseline -- over the
 held-out instance set. Everything that could differ between policies is fixed

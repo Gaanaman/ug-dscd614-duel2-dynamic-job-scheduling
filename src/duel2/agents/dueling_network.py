@@ -1,6 +1,6 @@
 """Dueling Q-network.
 
-Owner: Daniel K. Adotey (22424924)
+Owner: Daniel
 
     Q(s, a) = V(s) + ( A(s, a) - mean_{a' in valid} A(s, a') )
 

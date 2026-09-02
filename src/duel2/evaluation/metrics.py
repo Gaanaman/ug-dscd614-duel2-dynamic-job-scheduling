@@ -1,6 +1,6 @@
 """Episode metrics.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
 Computed from a completed episode's job records. The agent and every baseline
 use this module -- there is exactly one implementation of each metric in the

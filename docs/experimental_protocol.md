@@ -6,7 +6,7 @@ the numbers.
 
 ## Seeds
 
-Three training seeds: **0, 1, 2**. Recorded here, in `Submission_Links.txt`, and in the report.
+Three training seeds: **0, 1, 2**. Recorded here and in the report.
 
 Hyperparameters are held **identical** across seeds. A configuration tuned per seed invalidates
 the comparison and will be treated as such.

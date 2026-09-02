@@ -1,6 +1,6 @@
 """Seeding.
 
-Owner: Daniel K. Adotey (22424924)
+Owner: Daniel
 
 Three independent streams per run, so that agent stochasticity and instance
 difficulty never become confounded:

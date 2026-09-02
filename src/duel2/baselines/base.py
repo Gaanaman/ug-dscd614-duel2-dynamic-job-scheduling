@@ -1,6 +1,6 @@
 """Common policy interface.
 
-Owner: Caleb Abakah Mensah (22424188)
+Owner: Caleb
 
 The agent and all three baselines implement this interface and are executed by
 the same ``evaluation.harness.run_policy`` call on the same episodes with the

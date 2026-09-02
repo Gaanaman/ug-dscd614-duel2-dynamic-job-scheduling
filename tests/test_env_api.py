@@ -1,6 +1,6 @@
 """Gymnasium API conformance.
 
-Owner: Kyeremeh Faithful (22424515)
+Owner: Faithful
 
 The instructions require the Gymnasium API and forbid the deprecated OpenAI Gym
 package. check_env catches the whole class of five-tuple, dtype and bounds

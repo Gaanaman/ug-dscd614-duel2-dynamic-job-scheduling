@@ -1,6 +1,6 @@
 """Action validity masking.
 
-Owner: Kyeremeh Faithful (22424515)
+Owner: Faithful
 
 The mask must be applied in three places. All three are required:
 
