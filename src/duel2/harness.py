@@ -17,7 +17,7 @@ Fixed by this module:
 
 from __future__ import annotations
 
-from ..envs.job_generator import EVAL_SEED_END, EVAL_SEED_START
+from .jobs import EVAL_SEED_END, EVAL_SEED_START
 
 
 def eval_instance_seeds(n_episodes: int = 30) -> list[int]:
@@ -37,5 +37,39 @@ def run_policy(policy, env_config, n_episodes: int = 30, log_path=None, record_r
 
     Set ``record_rollout`` for one policy to dump a full decision trace for the
     Gantt figure and the demonstration video.
+    """
+    raise NotImplementedError("TODO")
+
+
+# ----------------------------------------------------------------- aggregation
+#
+# Rubric: "Report the mean and the variation across seeds for every metric. A
+# single number without a measure of spread is not accepted." And: "Do not
+# report the best seed as the headline result."
+#
+# aggregate_across_seeds therefore returns mean and standard deviation and has
+# no option to select a seed. Making that impossible in code is more reliable
+# than remembering not to do it at 2am on the fourth of September.
+
+
+def aggregate_across_seeds(per_seed_metrics: dict) -> dict:
+    """Mean and standard deviation of each metric across seeds.
+
+    Args:
+        per_seed_metrics: ``{seed: [EpisodeMetrics, ...]}``
+
+    Returns:
+        ``{metric_name: {"mean": float, "std": float, "per_seed": [...]}}``
+    """
+    raise NotImplementedError("TODO")
+
+
+def exceeds_seed_variation(agent_stat: dict, baseline_stat: dict) -> bool:
+    """Whether a difference is larger than the seed-to-seed variation.
+
+    With three seeds this is a comparison against the spread, not a significance
+    test. Three samples do not support one, and claiming otherwise will be
+    marked down. Phrase the finding in the report as "the difference exceeds /
+    does not exceed the variation across seeds".
     """
     raise NotImplementedError("TODO")

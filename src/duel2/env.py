@@ -87,7 +87,7 @@ class DynamicJobShopEnv(gym.Env):
         The no-op is always valid, otherwise a state with no idle machine would
         have an empty action set.
         """
-        raise NotImplementedError("TODO: delegate to envs.action_mask.build_mask")
+        raise NotImplementedError("TODO: delegate to action_mask.build_mask")
 
     def render(self):
         """ANSI text render: one line per machine showing its current job and

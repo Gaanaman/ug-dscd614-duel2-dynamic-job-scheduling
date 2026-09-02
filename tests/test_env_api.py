@@ -16,14 +16,14 @@ pytest.importorskip("gymnasium")
 def test_passes_gymnasium_checker():
     from gymnasium.utils.env_checker import check_env
 
-    from duel2.envs.scheduling_env import DynamicJobShopEnv
+    from duel2.env import DynamicJobShopEnv
 
     check_env(DynamicJobShopEnv(), skip_render_check=True)
 
 
 @pytest.mark.xfail(reason="environment not implemented yet", strict=False)
 def test_observation_dimension_matches_spec():
-    from duel2.envs.scheduling_env import DynamicJobShopEnv
+    from duel2.env import DynamicJobShopEnv
 
     env = DynamicJobShopEnv()
     K, M = env.cfg.queue_window, env.cfg.n_machines
@@ -34,7 +34,7 @@ def test_observation_dimension_matches_spec():
 @pytest.mark.xfail(reason="environment not implemented yet", strict=False)
 def test_same_instance_seed_gives_identical_episode():
     """Reproducibility: identical instance seed, identical job stream."""
-    from duel2.envs.scheduling_env import DynamicJobShopEnv
+    from duel2.env import DynamicJobShopEnv
 
     a = DynamicJobShopEnv().reset(options={"instance_seed": 4242})[0]
     b = DynamicJobShopEnv().reset(options={"instance_seed": 4242})[0]

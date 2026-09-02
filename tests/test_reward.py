@@ -1,6 +1,6 @@
 """Reward function.
 
-Owner: joint (rewards/reward_fn.py is the environment/metrics interface).
+Owner: joint (reward.py is the environment/metrics interface).
 """
 
 import pytest

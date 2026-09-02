@@ -4,7 +4,7 @@ Owner: Caleb
 
     python scripts/evaluate.py --config configs/eval.yaml
 
-Runs every policy named in the config through evaluation.harness.run_policy on
+Runs every policy named in the config through harness.run_policy on
 the same held-out instances, with exploration disabled, and writes per-episode
 records to logs/eval/*.jsonl. Aggregation across seeds happens here; the figure
 script only reads what this produces.

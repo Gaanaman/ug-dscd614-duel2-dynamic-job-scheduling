@@ -56,12 +56,17 @@ committed logs and never steps the environment, so no figure can exist without a
 
 ```
 src/duel2/
-  envs/        job generator, Gymnasium environment, observation, action mask
-  rewards/     reward function and component weights
-  agents/      dueling Q-network, masked epsilon-greedy, training loop
-  baselines/   FCFS, SJF, Round Robin behind one Policy interface
-  evaluation/  harness, metrics, cross-seed aggregation
-  utils/       seeding, structured logging, plotting
+  env.py           Gymnasium environment: decision epochs, step, termination
+  jobs.py          synthetic job instance generator, held-out seed guard
+  observation.py   the 69-dimensional observation vector
+  action_mask.py   action validity mask, build and apply
+  reward.py        the four-term reward equation and its weights
+  network.py       dueling Q-network, value and advantage heads
+  agent.py         masked DQN training loop
+  baselines.py     Policy interface, FCFS, SJF, Round Robin
+  metrics.py       episode metrics
+  harness.py       evaluation harness and cross-seed aggregation
+  runtime.py       seeding, structured logging, plotting
 configs/       env, agent and evaluation configuration
 docs/          MDP specification, protocol, hyperparameters
 scripts/       train, evaluate, make_figures, run_all
@@ -87,7 +92,7 @@ committed once they exist — every figure traces back to one.
 | Dueling network, masked training loop, logging, hyperparameters | Daniel |
 | Baselines, metrics, evaluation harness, aggregation, figures | Caleb |
 
-`src/duel2/rewards/reward_fn.py` is written jointly — it is the interface between the
+`src/duel2/reward.py` is written jointly — it is the interface between the
 environment and the metrics.
 
 ## Working on this

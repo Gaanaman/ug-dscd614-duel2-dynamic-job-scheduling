@@ -27,7 +27,7 @@ one and removes instance difficulty as a confound.
 
 Evaluation instance seeds `9000–9029` are never generated during training. Training draws from
 `seed + 1000` and increments per episode within a range that terminates below 9000. Assert this
-in `evaluation/harness.py` so an accidental overlap fails loudly rather than silently inflating
+in `harness.py` so an accidental overlap fails loudly rather than silently inflating
 the result.
 
 ## Evaluation settings

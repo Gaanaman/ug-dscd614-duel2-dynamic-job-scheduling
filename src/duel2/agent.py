@@ -8,7 +8,7 @@ the attribution comment here AND a row in docs/attribution.md. Rule 8: an
 unattributed adaptation is plagiarism regardless of how much was modified.
 
 Modifications over a standard DQN that must be described in the report:
-  1. dueling value/advantage heads (agents/dueling_network.py)
+  1. dueling value/advantage heads (network.py)
   2. action mask applied to the behaviour policy
   3. action mask applied to the bootstrap target -- requires storing the
      next-state mask in the replay buffer
