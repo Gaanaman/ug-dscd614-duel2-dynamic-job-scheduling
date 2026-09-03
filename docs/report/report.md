@@ -402,12 +402,11 @@ with pooling, or attention over slots — makes cross-slot comparison native rat
 times of unreleased jobs are absent. A recurrent encoder, or stacking a short observation history,
 is the natural response and was not attempted.
 
-**Masking the no-op forecloses a real capability.** An operator sometimes should hold a fast
-machine for an urgent job arriving imminently. The headline agent cannot express that. The
-underlying cause is a reward whose per-step signal is almost always negative, making deferral
-attractive under discounting; a potential-based shaping term, or a positive completion baseline
-that makes progress intrinsically rewarding, would likely allow the no-op to be retained. Testing
-that was out of scope for the time available.
+**Masking the no-op forecloses a real capability.** An operator should sometimes hold a fast machine
+for an urgent job arriving imminently, and the headline agent cannot express that. The cause is a
+reward whose per-step signal is almost always negative, making deferral attractive under
+discounting; potential-based shaping, or a positive completion baseline, would likely let the no-op
+be retained. Testing that was out of scope.
 
 **The instance distribution is synthetic and single-operation.** Real job shops have
 multi-operation jobs with precedence constraints, sequence-dependent setups, breakdowns, and
@@ -415,8 +414,8 @@ non-stationary arrivals. Nothing here demonstrates transfer, and the load parame
 partly to make the comparison informative — a legitimate experimental choice, not a claim about any
 real workload.
 
-**Three seeds is a small sample.** Differences are compared against the seed-to-seed spread. No
-significance test is performed and none would be supported.
+**Three seeds is a small sample.** Differences are compared against the seed spread; no
+significance test is performed or supported.
 
 **For deployment**, three properties matter more than the headline metric. Inference is one forward
 pass through an 85,000-parameter network, fast enough for a dispatch loop. The mask is enforced by
