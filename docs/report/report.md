@@ -21,17 +21,14 @@ This project asks whether reinforcement learning can learn that trade-off. We fo
 scheduling on parallel non-identical machines as an MDP, train a Dueling DQN on it, and compare
 against all three rules under a protocol fixed before any result was seen.
 
-The aims are:
+The aims are to specify the problem as an MDP with a fixed-dimension state, a masked discrete
+action space, and a reward traceable to the evaluation metrics; to implement and train a Dueling
+DQN with correct action masking; to evaluate against all three dispatching rules on held-out
+instances under identical conditions with variation reported across seeds; and to diagnose rather
+than conceal whatever the comparison shows.
 
-1. To specify the problem as an MDP with a fixed-dimension state, a masked discrete action space,
-   and a reward whose components are traceable to the metrics used for evaluation.
-2. To implement and train a Dueling DQN agent with correct action masking.
-3. To evaluate the agent against all three dispatching rules on held-out instances under identical
-   conditions, reporting variation across seeds for every metric.
-4. To diagnose, rather than conceal, whatever the comparison shows.
-
-The fourth aim did substantial work. Three faults were found during development, none producing an
-error message, one of them a formulation problem rather than a coding error.
+The fourth aim did substantial work. Three faults surfaced during development, none producing an
+error message, one a formulation problem rather than a coding error.
 
 ## 2. Background
 
@@ -374,10 +371,9 @@ that degraded with training: average waiting time rose from 7.30 to 17.28 across
 
 ### 6.3 On exploration and convergence
 
-Exploration is uniform over legal actions, which is a meaningful constraint in this environment:
-typically fewer than fifteen of the fifty-one actions are legal, so unmasked ε-greedy would spend
-most of its budget on rejected moves. The linear ε decay over the first 30% of training was not
-tuned; no hyperparameter search was conducted, and none is claimed.
+Exploration is uniform over legal actions, a meaningful constraint here: typically fewer than
+fifteen of the fifty-one actions are legal, so unmasked ε-greedy would waste most of its budget.
+The ε schedule was not tuned; no hyperparameter search was conducted and none is claimed.
 
 Return plateaued from 700,000 steps onward and spread across seeds stayed under 0.07 throughout,
 so the run is stable and the budget was adequate. Nothing here is limited by compute.
