@@ -357,17 +357,16 @@ Full figures in `docs/mdp_spec.md` §4.
 
 ### 6.2 Two silent implementation faults
 
-Neither produced an error message; both are recorded in Appendix A with the tests that now cover
-them.
+Neither produced an error message; both are in Appendix A with the tests now covering them.
 
-The first placed training instance seeds for seeds 1 and 2 above 9000, inside the held-out
-evaluation range. Had it shipped, two of three seeds would have been evaluated on instances they
-trained on and every headline number would have been inflated.
+The first placed training instance seeds for seeds 1 and 2 inside the held-out evaluation range.
+Two of three seeds would have been evaluated on instances they trained on, inflating every headline
+number.
 
-The second supplied an all-ones mask for the current state inside the loss. Because the dueling
-aggregation subtracts the mean advantage over legal actions, `Q(s,a)` during the update was a
-different function from the one the behaviour policy evaluated. The observable symptom was an agent
-that degraded with training: average waiting time rose from 7.30 to 17.28 across a 20,000-step run.
+The second supplied an all-ones current-state mask inside the loss. Because the dueling aggregation
+subtracts the mean advantage over legal actions, `Q(s,a)` during the update was a different function
+from the one the behaviour policy evaluated. The symptom was an agent that degraded with training:
+average waiting time rose from 7.30 to 17.28 across a 20,000-step run.
 
 ### 6.3 On exploration and convergence
 
@@ -437,10 +436,10 @@ instance-seed overlap with the held-out set, a mask omitted from the loss, and a
 that rewarded stalling — produced no error message and would have survived into the report unmeasured.
 A uniform-random legal policy and a load-separation check, neither required by the brief, surfaced them.
 
-Further work, in order of expected value: retain the no-op with potential-based reward shaping;
-replace the fixed ten-slot window with a permutation-invariant encoder over the whole queue;
+Further work, in order of expected value: replace the fixed ten-slot window with a
+permutation-invariant encoder over the queue; retain the no-op under potential-based shaping;
 evaluate the `double_q` flag as the D3QN combination the literature favours; and test transfer
-across arrival rates the agent was not trained on.
+across untrained arrival rates.
 
 ---
 
