@@ -131,20 +131,17 @@ unreachable outputs leak into `V(s)`; and the current-state mask must be supplie
 or `Q(s,a)` in the loss differs from what the behaviour policy evaluates. Appendix A.5 reports what
 happened when it was not.
 
-**Two formulations are implemented and both are reported.** Formulation A is the direct assignment
-just described. **Formulation B, the headline, is dispatching-rule selection**: `Discrete(8)` over
-SPT, LPT, EDD, FCFS, WSPT, minimum slack, critical ratio and apparent tardiness cost. The rule
-selects the job; the machine is the fastest idle machine for every rule, so the action isolates job
-selection.
+**Two formulations are implemented and both reported.** Formulation A is the direct assignment just
+described. **Formulation B, the headline, is dispatching-rule selection**: `Discrete(8)` over SPT,
+LPT, EDD, FCFS, WSPT, minimum slack, critical ratio and apparent tardiness cost. The rule selects the
+job; the machine is the fastest idle one for every rule, so the action isolates job selection.
 
-The catalogue lists direct assignment as a *candidate* action and the brief credits a justified
-departure. The justification is Han and Yang (2020) and the mechanism is specific: SPT implements a
-comparison across queued jobs, which under Formulation A the network must rediscover for every
-pairing of slot positions in a flat vector. Under Formulation B the rule performs the comparison.
-
-`FixedRule(SPT)` reproduces the Shortest-Job-First baseline to within 1e-9 on every metric, and
-`FixedRule(FCFS)` reproduces First-Come-First-Served, so the two formulations are comparable rather
-than assumed so. **The no-op is masked out in both**, an empirical decision evidenced in Section 6.1.
+The catalogue lists direct assignment as a *candidate* and the brief credits a justified departure.
+The justification is Han and Yang (2020); the mechanism is that SPT implements a comparison across
+queued jobs which, under A, the network must rediscover for every pairing of slot positions in a flat
+vector, while under B the rule performs it. `FixedRule(SPT)` reproduces Shortest-Job-First to within
+1e-9 on every metric and `FixedRule(FCFS)` reproduces First-Come-First-Served, so the formulations
+are shown comparable rather than assumed so. **The no-op is masked out in both**, evidenced in §6.3.
 
 ### 3.5 Reward
 
@@ -360,17 +357,16 @@ changes which transitions are replayed, not how far credit travels.
 
 ### 6.3 Three faults found by measuring rather than assuming
 
-Three problems surfaced during development, none of which produced an error message. The action
-space originally included a no-op; the resulting policy chose it at 46.3% of decision epochs and
-scored **worse than a uniform-random legal policy**, which is the diagnostic that separates a broken
-agent from an undertrained one. Training instance seeds for two of three seeds fell inside the
-held-out evaluation range, which would have inflated every headline number. And the training loss
-supplied an all-ones current-state mask, so `Q(s,a)` during the update was a different function from
-the one the behaviour policy evaluated, producing an agent that degraded as it trained.
+Three problems surfaced during development, none producing an error message. The action space
+originally included a no-op; the policy chose it at 46.3% of decision epochs and scored **worse than
+a uniform-random legal policy**, the diagnostic separating a broken agent from an undertrained one.
+Training instance seeds for two of three seeds fell inside the held-out evaluation range, which would
+have inflated every headline number. And the loss supplied an all-ones current-state mask, so
+`Q(s,a)` during the update differed from what the behaviour policy evaluated, producing an agent that
+degraded as it trained.
 
-Each was found by a cheap measurement taken before the result was trusted: a random-policy floor, a
-printed seed range, and a smoke run whose direction was checked. Full forensics, with the tests that
-now cover each, are in Appendix A.
+Each was found by a cheap measurement taken before the result was trusted. Full forensics, with the
+tests now covering each, are in Appendix A.
 
 ### 6.5 Why the agent stops short of the best single rule
 
