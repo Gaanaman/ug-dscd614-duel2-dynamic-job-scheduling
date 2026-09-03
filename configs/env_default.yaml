@@ -37,3 +37,4 @@ deadline_tightness_max: 2.5
 
 horizon: 120.0            # H -- time normalisation constant; E[span] = N/lambda = 91
 max_epochs_factor: 4      # T_max = factor * n_jobs
+allow_noop: true          # ablated in the report; see docs/mdp_spec.md

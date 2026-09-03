@@ -50,6 +50,16 @@ class EnvConfig:
     deadline_tightness_max: float = 2.5
     horizon: float = 120.0
     max_epochs_factor: int = 4
+    allow_noop: bool = True
+    """Whether the agent may decline to dispatch and let the clock run.
+
+    A decision epoch always offers at least one legal dispatch, so the no-op is
+    never required for the action set to be non-empty. It exists so the agent
+    can deliberately hold an idle machine for an urgent job that is about to
+    arrive. Setting this False masks it out permanently, keeping the action
+    space at K*M+1 so the specification and the saved networks stay compatible.
+    Reported as an ablation -- see docs/mdp_spec.md.
+    """
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "EnvConfig":
@@ -218,7 +228,8 @@ class DynamicJobShopEnv(gym.Env):
             n_visible_jobs=len(self.visible_jobs()),
             idle_machines=[r is None for r in self._running],
             queue_window=self.cfg.queue_window,
-            future_event_exists=self._next_event_time() is not None,
+            future_event_exists=(self.cfg.allow_noop
+                                 and self._next_event_time() is not None),
         )
 
     def visible_jobs(self) -> list[Job]:

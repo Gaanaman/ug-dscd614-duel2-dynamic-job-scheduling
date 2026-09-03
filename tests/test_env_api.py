@@ -97,3 +97,25 @@ def test_strict_mode_rejects_a_masked_action():
     invalid = int(np.flatnonzero(~info["action_mask"])[0])
     with pytest.raises(ValueError, match="masked out"):
         env.step(invalid)
+
+
+def test_training_instances_never_enter_the_held_out_range():
+    """The bug this catches would silently invalidate every number in the report."""
+    from duel2.jobs import EVAL_SEED_END, EVAL_SEED_START
+    from duel2.runtime import training_instance_seed
+
+    for seed in range(6):
+        for episode in range(0, 20000, 7):
+            s = training_instance_seed(seed, episode)
+            assert not (EVAL_SEED_START <= s < EVAL_SEED_END), (seed, episode, s)
+            assert s >= 0
+
+
+def test_each_training_seed_gets_its_own_instances():
+    """Seeds must not train on each other's instances, or the runs are not independent."""
+    from duel2.runtime import training_instance_seed
+
+    bands = [{training_instance_seed(s, e) for e in range(3000)} for s in range(3)]
+    assert bands[0].isdisjoint(bands[1])
+    assert bands[1].isdisjoint(bands[2])
+    assert bands[0].isdisjoint(bands[2])

@@ -115,3 +115,43 @@ def _dispatch(info: dict, mask: np.ndarray, key) -> int:
     machine = max(idle_machines, key=lambda m: speeds[m])
     action = slot * n_machines + machine
     return action if mask[action] else int(np.flatnonzero(mask)[0])
+
+
+class RandomMasked:
+    """Uniform over legal moves. Not a required baseline -- a diagnostic floor.
+
+    A learned policy that cannot beat this is broken, not undertrained, and the
+    distinction decides whether the next step is more compute or a bug hunt.
+    """
+
+    name = "Random"
+
+    def __init__(self, seed: int = 0):
+        self.rng = np.random.default_rng(seed)
+
+    def reset(self) -> None:
+        pass
+
+    def act(self, obs: np.ndarray, mask: np.ndarray, info: dict) -> int:
+        return int(self.rng.choice(np.flatnonzero(mask)))
+
+
+class NeverWait:
+    """Always dispatch something; never take the no-op. Diagnostic.
+
+    Isolates how much of the agent's cost comes from choosing to wait rather
+    than from choosing badly among dispatches.
+    """
+
+    name = "NeverWait"
+
+    def __init__(self, seed: int = 0):
+        self.rng = np.random.default_rng(seed)
+
+    def reset(self) -> None:
+        pass
+
+    def act(self, obs: np.ndarray, mask: np.ndarray, info: dict) -> int:
+        legal = np.flatnonzero(mask)
+        dispatch = legal[legal < len(mask) - 1]
+        return int(self.rng.choice(dispatch if len(dispatch) else legal))
