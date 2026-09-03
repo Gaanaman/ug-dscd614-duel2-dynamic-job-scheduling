@@ -1,6 +1,6 @@
 # Dynamic Job Scheduling with a Dueling Deep Q-Network
 
-DSCD 614 Reinforcement Learning · Group 11 · Option DUEL-2
+DSCD 614 · Group 11 · Option DUEL-2
 
 ---
 
