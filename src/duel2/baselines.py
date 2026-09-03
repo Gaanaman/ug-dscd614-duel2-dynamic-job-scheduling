@@ -155,3 +155,23 @@ class NeverWait:
         legal = np.flatnonzero(mask)
         dispatch = legal[legal < len(mask) - 1]
         return int(self.rng.choice(dispatch if len(dispatch) else legal))
+
+
+class FixedRule:
+    """Always apply one dispatching rule. Used in the "rules" action mode.
+
+    This is what makes the two action spaces directly comparable: FixedRule(SPT)
+    in the rules environment must produce exactly the schedule Shortest-Job-First
+    produces in the direct environment. tests/test_rules.py asserts it.
+    """
+
+    def __init__(self, rule_index: int):
+        from .rules import RULE_NAMES
+        self.rule_index = rule_index
+        self.name = RULE_NAMES[rule_index]
+
+    def reset(self) -> None:
+        pass
+
+    def act(self, obs: np.ndarray, mask: np.ndarray, info: dict) -> int:
+        return self.rule_index

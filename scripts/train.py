@@ -55,9 +55,19 @@ def main() -> None:
     ap.add_argument("--total-timesteps", type=int, default=None,
                     help="overrides the config; declare any override in the report")
     ap.add_argument("--out-dir", default=".")
+    ap.add_argument("--overwrite", action="store_true",
+                    help="replace an existing checkpoint for this seed")
     args = ap.parse_args()
 
     out = Path(args.out_dir)
+    model_path = out / f"models/dueling_dqn_seed{args.seed}.pt"
+    if model_path.exists() and not args.overwrite:
+        raise SystemExit(
+            f"{model_path} already exists. Refusing to overwrite a saved run.\n"
+            f"Pass --out-dir to write elsewhere, or --overwrite to replace it.\n"
+            f"This guard exists because a run launched without --out-dir once clobbered a\n"
+            f"committed checkpoint, leaving the weights inconsistent with their own log."
+        )
     agent_cfg = load_agent_config(args.config, args.total_timesteps)
     env_cfg = EnvConfig.from_yaml(args.env_config)
     weights = RewardWeights(**yaml.safe_load(Path(args.reward_config).read_text()))
@@ -70,7 +80,6 @@ def main() -> None:
         agent = MaskedDuelingDQN(env, agent_cfg, seed=args.seed, logger=logger)
         summary = agent.train()
 
-    model_path = out / f"models/dueling_dqn_seed{args.seed}.pt"
     model_path.parent.mkdir(parents=True, exist_ok=True)
     agent.save(model_path)
 

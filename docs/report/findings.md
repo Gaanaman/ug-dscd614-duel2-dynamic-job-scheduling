@@ -55,3 +55,25 @@ distribution where no scheduler could have mattered.
 
 Three of the four substantive problems in this project were found by measuring something before
 trusting it. None of them would have produced an error message.
+
+## 4. A checkpoint stopped matching its own log
+
+`aggregate.json` records per-seed held-out waiting times of [4.716, 4.658, 4.738] and the training
+log for seed 1 shows a final-500-episode return of −2.003, in line with seeds 0 and 2. Both are
+consistent, and the reported headline of 4.704 ± 0.034 is traceable to them.
+
+The saved weights for seed 1 were later overwritten by a training run launched without `--out-dir`,
+which defaults to the repository root. Evaluating the checkpoint on disk gives 24.595 — nothing like
+the log it is supposed to accompany.
+
+**Consequence:** the reported numbers are correct, but the submitted artefacts were internally
+inconsistent. A marker re-running `evaluate.py` against the committed checkpoints would not have
+reproduced the committed `aggregate.json`, which is exactly the failure the reproducibility
+criterion is testing for.
+
+**Found by:** evaluating each seed separately after an aggregate came out with an implausible spread
+(±9.3 where the committed value was ±0.03). A single aggregated number would have hidden it.
+
+**Fix:** seeds retrained so the committed weights, logs and aggregate all agree, and
+`scripts/train.py` now refuses to write into a directory that already holds a committed run unless
+`--overwrite` is passed.

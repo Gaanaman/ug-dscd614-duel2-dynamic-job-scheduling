@@ -1,0 +1,85 @@
+"""Dispatching-rule action space.
+
+Owner: Daniel
+
+The equivalence tests are what license comparing the two action modes: a fixed
+rule in the rules environment must produce exactly the schedule the equivalent
+baseline produces in the direct environment. If they diverge, the comparison in
+the report is not like-for-like.
+"""
+
+import statistics as st
+from dataclasses import replace
+
+import pytest
+
+from duel2.baselines import FCFS, SJF, FixedRule
+from duel2.env import DynamicJobShopEnv, EnvConfig
+from duel2.harness import run_policy
+from duel2.rules import N_RULES, RULE_NAMES, apply_rule
+
+
+def direct_env():
+    return DynamicJobShopEnv(EnvConfig(allow_noop=False))
+
+
+def rules_env():
+    return DynamicJobShopEnv(replace(EnvConfig(allow_noop=False), action_mode="rules"))
+
+
+def test_action_space_size_matches_the_rule_count():
+    assert rules_env().action_space.n == N_RULES
+
+
+def test_every_rule_is_always_applicable_at_a_decision_epoch():
+    env = rules_env()
+    obs, info = env.reset(options={"instance_seed": 9000})
+    for _ in range(60):
+        assert info["action_mask"].all(), "a rule was unavailable at a decision epoch"
+        obs, _, terminated, truncated, info = env.step(0)
+        if terminated or truncated:
+            break
+
+
+@pytest.mark.parametrize("rule,baseline", [("SPT", SJF()), ("FCFS", FCFS())])
+def test_fixed_rule_reproduces_its_baseline_exactly(rule, baseline):
+    idx = RULE_NAMES.index(rule)
+    a, _ = run_policy(baseline, direct_env(), n_episodes=10)
+    b, _ = run_policy(FixedRule(idx), rules_env(), n_episodes=10)
+    for field in ("avg_waiting_time", "weighted_tardiness", "makespan", "missed_deadlines"):
+        assert st.mean(r[field] for r in a) == pytest.approx(
+            st.mean(r[field] for r in b), abs=1e-9
+        ), f"{rule} diverges from {baseline.name} on {field}"
+
+
+def test_spt_picks_the_shortest_visible_job():
+    env = rules_env()
+    env.reset(options={"instance_seed": 9003})
+    visible = env.visible_jobs()
+    idle = [r is None for r in env._running]
+    slot, _ = apply_rule(RULE_NAMES.index("SPT"), visible, idle,
+                         env.cfg.machine_speeds, env.now, env.cfg)
+    assert visible[slot].processing_time == min(j.processing_time for j in visible)
+
+
+def test_edd_picks_the_earliest_deadline():
+    env = rules_env()
+    env.reset(options={"instance_seed": 9004})
+    visible = env.visible_jobs()
+    idle = [r is None for r in env._running]
+    slot, _ = apply_rule(RULE_NAMES.index("EDD"), visible, idle,
+                         env.cfg.machine_speeds, env.now, env.cfg)
+    assert visible[slot].deadline == min(j.deadline for j in visible)
+
+
+def test_rules_always_choose_the_fastest_idle_machine():
+    """Every rule shares one machine tie-break, so the choice isolates job selection."""
+    env = rules_env()
+    env.reset(options={"instance_seed": 9005})
+    visible = env.visible_jobs()
+    idle = [r is None for r in env._running]
+    speeds = env.cfg.machine_speeds
+    fastest = max((m for m in range(len(idle)) if idle[m]), key=lambda m: speeds[m])
+    for i in range(N_RULES):
+        _, machine = apply_rule(i, visible, idle, speeds, env.now, env.cfg)
+        assert machine == fastest
