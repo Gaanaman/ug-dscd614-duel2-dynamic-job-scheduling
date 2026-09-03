@@ -77,3 +77,51 @@ criterion is testing for.
 **Fix:** seeds retrained so the committed weights, logs and aggregate all agree, and
 `scripts/train.py` now refuses to write into a directory that already holds a committed run unless
 `--overwrite` is passed.
+
+## 5. Prioritised replay did not help, against the literature's recommendation
+
+`docs/report/literature_review.md` recommended prioritised experience replay as the highest-value
+next change, on the grounds that it appears in the recipe of the closest published precedent
+(Han & Yang, 2020, dueling double DQN **with prioritised replay**) and in Liu et al. (2025). The
+review also flagged that **no paper in the verified corpus isolates PER's contribution on a
+scheduling problem** — the canonical ablation (Hessel et al., 2018) is on Atari.
+
+The ablation says PER does not help here. Three seeds, one million steps, rule action space,
+held-out evaluation, cumulative reward:
+
+| Variant | Per-seed return | Mean | s.d. |
+|---|---|---|---|
+| rules, uniform replay | −1.334, −1.314, −1.247 | −1.298 | 0.037 |
+| rules + PER | −1.309, −1.333, −1.294 | −1.312 | 0.016 |
+| rules + n-step 3 | −1.222, −1.212, −1.269 | **−1.235** | 0.025 |
+| rules + PER + n-step 3 | −1.315, −1.282, −1.263 | −1.287 | 0.021 |
+
+- **PER against uniform replay:** difference −0.014 against a combined spread of 0.053. Within the
+  spread, and no per-seed dominance. **No measurable effect.**
+- **n-step 3 against uniform replay:** difference +0.064 against a combined spread of 0.062.
+  Exceeds the spread, and n-step wins on **every** seed. A real improvement.
+- **PER added on top of n-step:** difference −0.052 against a combined spread of 0.046. Adding PER
+  to n-step *degrades* the result.
+
+### What this does and does not license us to say
+
+It does **not** refute Han and Yang. Their setting differs on three axes that plausibly matter:
+they use a CNN over multi-channel image states, they solve 85 static OR-Library instances rather
+than a stochastic-arrival stream, and their PER sits inside a dueling *double* DQN. Any of those
+could change the value of prioritising by TD error.
+
+It does license a narrow, defensible claim: **on this problem, with this state representation and
+this action space, prioritised replay contributes nothing measurable and n-step returns contribute
+a real improvement.** That is a genuine, if small, contribution precisely because the review found
+no scheduling-domain ablation isolating PER.
+
+The mechanism is consistent with the diagnosis. Our reward is 0 at the instant a dispatch is
+committed and its cost appears tens of decisions later. n-step returns attack that directly by
+propagating the delayed consequence to the causing action in one update. PER changes *which*
+transitions are replayed, not how far credit travels, so it does not address the binding constraint.
+Prioritising by TD error may even concentrate replay on high-variance transitions near episode
+boundaries, which would explain the degradation when combined with n-step.
+
+**Method note for the report:** with three seeds we compare a difference against the combined
+seed spread and check per-seed dominance. We do not run a significance test; three samples do not
+support one.

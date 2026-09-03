@@ -196,3 +196,43 @@ def rollout_gantt(records, ax=None):
     ax.set_xlabel("simulated time")
     _style(ax)
     return ax
+
+
+def ablation_bars(comparison: dict, metric: str = "cumulative_reward", ax=None,
+                  bar_key: str = "rule:ATC"):
+    """Agent variants against the best single dispatching rule.
+
+    The horizontal line is the bar: the best fixed rule inside the action set.
+    Any variant below it has not learned to select better than a policy that
+    always picks one rule, which is the comparison Han and Yang (2020) make and
+    the only one that means anything under a rule action space.
+    """
+    import matplotlib.pyplot as plt
+    if ax is None:
+        _, ax = plt.subplots(figsize=(7.6, 4))
+
+    order = [k for k in comparison if k.startswith("agent:")]
+    labels = [k.replace("agent:", "") for k in order]
+    means = [comparison[k][metric]["mean"] for k in order]
+    stds = [comparison[k][metric]["std"] for k in order]
+    bar = comparison[bar_key][metric]["mean"]
+
+    # Returns are negative and the axis does not include zero, so bars are drawn
+    # from the axis floor upward rather than from zero downward.
+    floor = min(means) - 0.14
+    colours = ["#c2521a" if m == max(means) else "#8a8f88" for m in means]
+    ax.bar(labels, [m - floor for m in means], bottom=floor, yerr=stds, capsize=4,
+           color=colours, edgecolor="none", width=.6)
+    ax.axhline(bar, color="#166b58", lw=1.6, ls="--",
+               label=f"best single rule ({bar_key.split(':')[1]}) {bar:+.3f}")
+
+    for x, (m, sd) in enumerate(zip(means, stds)):
+        ax.text(x, m + sd + 0.012, f"{m:+.3f}", ha="center", va="bottom", fontsize=8.5,
+                family="monospace")
+
+    ax.set_ylabel(metric.replace("_", " "))
+    ax.set_ylim(floor, max(max(means), bar) + 0.08)
+    ax.tick_params(axis="x", rotation=18)
+    ax.legend(frameon=False, fontsize=9, loc="lower right")
+    _style(ax)
+    return ax

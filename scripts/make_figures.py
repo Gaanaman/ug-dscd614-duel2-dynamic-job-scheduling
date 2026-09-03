@@ -21,9 +21,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from duel2.runtime import baseline_bars, read_jsonl, rollout_gantt, training_curve
+from duel2.runtime import ablation_bars, baseline_bars, read_jsonl, rollout_gantt, training_curve
 
-FIGURES = ("training_curve", "baseline_bars", "rollout_gantt")
+FIGURES = ("training_curve", "baseline_bars", "rollout_gantt", "ablation")
 BAR_METRICS = [("avg_waiting_time", True), ("missed_deadlines", True),
                ("weighted_tardiness", True), ("machine_utilisation", False)]
 
@@ -71,6 +71,16 @@ def main() -> None:
                      fontsize=10, loc="left")
         fig.tight_layout(); fig.savefig(out / "rollout_gantt.png", dpi=180)
         plt.close(fig); made.append("rollout_gantt.png")
+
+    comp_path = logs / "eval" / "comparison.json"
+    if "ablation" in want and comp_path.exists():
+        comp = json.loads(comp_path.read_text())
+        fig, ax = plt.subplots(figsize=(7.6, 4))
+        ablation_bars(comp, ax=ax)
+        ax.set_title("Agent variants against the best single dispatching rule",
+                     fontsize=10, loc="left")
+        fig.tight_layout(); fig.savefig(out / "ablation.png", dpi=180)
+        plt.close(fig); made.append("ablation.png")
 
     print("wrote: " + (", ".join(made) if made else "nothing -- no logs found"))
 
