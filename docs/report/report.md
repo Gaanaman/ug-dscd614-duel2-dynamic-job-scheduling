@@ -316,8 +316,7 @@ required dispatching rules, and does not select them better than always choosing
 §6.5 takes up why.
 
 Machine utilisation (0.884–0.927) and makespan vary by under 5% across all thirteen policies; both
-are dominated by the arrival process and discriminate poorly here, and are reported because the
-brief requires them.
+are dominated by the arrival process and are reported because the brief requires them.
 
 ## 6. Discussion
 
