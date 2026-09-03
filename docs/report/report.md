@@ -279,8 +279,8 @@ significance-tested; three samples do not support a test and we do not claim one
 
 ## 5. Results
 
-Three seeds, one million steps each (~23 min/seed on CPU), evaluated on 30 held-out instances with
-exploration disabled. Every figure regenerates from committed logs.
+Three seeds, one million steps each, evaluated on 30 held-out instances with exploration disabled.
+Every figure regenerates from committed logs.
 
 ### 5.1 Training
 
