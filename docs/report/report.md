@@ -259,16 +259,15 @@ are compared against the seed spread; three samples do not support a significanc
 
 ## 5. Results
 
-Three seeds, one million steps per seed, evaluated on the 30 held-out instances with exploration
-disabled. Every policy — the eight fixed rules, the three required baselines, the random floor and
-every agent variant — runs through the same `harness.run_policy` call on the same instances through
-the same metric code. Figures regenerate from committed logs.
+Three seeds, one million steps each, on the 30 held-out instances with exploration disabled. Every
+policy — eight fixed rules, three required baselines, the random floor and every agent variant — runs
+through the same `harness.run_policy` call on the same instances through the same metric code.
 
 ### 5.1 Training
 
 Return rises from −2.58 at 100,000 steps to −1.92 at 700,000 and is flat thereafter, so the budget
-sufficed. Seed spread stays at or below 0.062, indicating stability under reseeding. Training returns
-include ε = 0.05 and are not comparable to evaluation numbers.
+sufficed; seed spread stays at or below 0.062. Training returns include ε = 0.05 and are not
+comparable to evaluation numbers.
 
 ### 5.2 The dispatching rules, and the bar they set
 
@@ -404,10 +403,10 @@ comparison informative.
 test is supported.
 
 **For deployment**, three properties matter more than the headline metric. Inference is one forward
-pass through an 85,000-parameter network, fast enough for a dispatch loop. The mask is enforced by
-the environment, so an out-of-distribution observation cannot produce an illegal schedule — the
-failure mode is a poor legal choice, not an invalid one. Under Formulation B every action is a named
-dispatching rule, so a decision is auditable by an operator, which matters more in a plant than a
+pass through a small network, fast enough for a dispatch loop. The mask is enforced by the
+environment, so an out-of-distribution observation cannot produce an illegal schedule — the failure
+mode is a poor legal choice, not an invalid one. Under Formulation B every action is a named
+dispatching rule, so decisions are auditable by an operator, which matters more in a plant than a
 marginal metric gain. But the policy inherits its training arrival distribution, so a load shift
 requires retraining and the rules stay as fallback.
 
