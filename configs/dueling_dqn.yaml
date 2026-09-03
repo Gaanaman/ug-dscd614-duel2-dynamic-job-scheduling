@@ -23,3 +23,10 @@ epsilon:
   decay_fraction: 0.3     # of total_timesteps
 
 total_timesteps: 1000000    # ~11 min/seed on CPU; the 300k curve was still improving
+
+# Headline configuration, selected by the ablation in docs/report/findings.md §5.
+# n-step 3 returns: +0.064 against a combined seed spread of 0.062, winning on
+# every seed. Prioritised replay is OFF: no measurable effect (-0.014 against a
+# spread of 0.053) and it degrades the result when combined with n-step.
+n_step: 3
+prioritised_replay: false

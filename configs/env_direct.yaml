@@ -46,14 +46,7 @@ allow_noop: false
 # "assign a selected job to a selected machine", so dispatch-only is faithful to
 # the brief. Reported as an ablation -- see docs/mdp_spec.md section 4.
 
-# Dispatching-rule action space. The agent selects which of eight rules to apply
-# at each decision epoch; the rule then selects the job. Reviews of DRL for
-# dynamic job-shop scheduling report this consistently outperforms selecting an
-# eligible operation directly. See src/duel2/rules.py and the report.
-#
-# Honest framing: two rules in the set (ATC, WSPT) already beat all three
-# required baselines, so the agent reaching SJF-level performance proves nothing.
-# The bar is the BEST SINGLE RULE -- ATC, return -1.125 -- which the agent can
-# match by always choosing it. The question is whether switching rules by state
-# beats any fixed rule.
-action_mode: rules
+# ABLATION configuration: direct (job slot, machine) action space.
+# Reported in the report as Formulation A. Scores -1.543 against the headline
+# rule formulation's -1.235. Kept so the ablation reproduces.
+action_mode: direct

@@ -26,8 +26,8 @@ for seed in "${SEEDS[@]}"; do
   python scripts/train.py --config configs/dueling_dqn.yaml --env-config configs/env_default.yaml --seed "$seed"
 done
 
-echo "==> Evaluation (agent and baselines, identical instances)"
-python scripts/evaluate.py --config configs/eval.yaml
+echo "==> Evaluation: agent, eight dispatching rules, required baselines"
+python scripts/compare_all.py --out logs/eval/comparison.json
 
 echo "==> Figures"
 python scripts/make_figures.py --logs logs/ --out figures/

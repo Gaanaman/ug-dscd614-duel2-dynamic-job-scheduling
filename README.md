@@ -8,9 +8,11 @@ Coursework project for DSCD 614 (Reinforcement Learning), University of Ghana.
 
 | | |
 |---|---|
-| Algorithm | Dueling DQN |
+| Algorithm | Dueling DQN, n-step 3 returns |
 | Environment | `DynamicJobShop-v0` — custom Gymnasium environment, synthetic job stream |
-| Baselines | FCFS, SJF, Round Robin |
+| Action space | Eight dispatching rules (headline); direct job/machine assignment (ablation) |
+| Baselines | FCFS, SJF, Round Robin (required); all eight rules; uniform-random floor |
+| Headline result | Beats all three required baselines on every metric and seed; **below the best single rule (ATC) by 0.109** |
 | Metrics | makespan · average waiting time · machine utilisation · missed deadlines · cumulative reward |
 | Protocol | 3 training seeds, 30 held-out evaluation episodes per seed |
 
@@ -45,9 +47,13 @@ baselines sit within noise of each other, or if the deadline miss rate has satur
 Individual stages:
 
 ```bash
-python scripts/train.py    --config configs/dueling_dqn.yaml --seed 0
-python scripts/evaluate.py --config configs/eval.yaml
+python scripts/train.py       --config configs/dueling_dqn.yaml --seed 0
+python scripts/compare_all.py --out logs/eval/comparison.json
 python scripts/make_figures.py --logs logs/ --out figures/
+
+# the direct-action ablation
+python scripts/train.py --config configs/dueling_dqn.yaml \
+    --env-config configs/env_direct.yaml --seed 0 --out-dir runs/direct
 ```
 
 ## Figure provenance
