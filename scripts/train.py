@@ -43,6 +43,9 @@ def load_agent_config(path: str, override_steps: int | None) -> AgentConfig:
         total_timesteps=int(raw["total_timesteps"]),
         double_q=bool(raw.get("double_q", False)),
         n_step=int(raw.get("n_step", 1)),
+        prioritised_replay=bool(raw.get("prioritised_replay", False)),
+        per_alpha=float(raw.get("per_alpha", 0.6)),
+        per_beta_start=float(raw.get("per_beta_start", 0.4)),
     )
     return replace(cfg, total_timesteps=override_steps) if override_steps else cfg
 

@@ -109,3 +109,42 @@ def test_n_step_returns_use_the_matching_discount():
         allowed = {round(0.99 ** k, 6) for k in range(1, n + 1)}
         assert used <= allowed, f"n={n} produced discounts outside gamma^1..gamma^{n}: {used - allowed}"
         assert round(0.99 ** n, 6) in used or n == 1
+
+
+def test_uniform_replay_weights_reduce_to_the_plain_huber_loss():
+    """With no importance weights the loss must equal the unweighted mean.
+
+    Guards the branch: if the weighted path silently applied to uniform replay,
+    every headline result would shift without any config change.
+    """
+    import torch
+    from dataclasses import replace as dc_replace
+
+    from duel2.agent import AgentConfig, MaskedDuelingDQN
+
+    agent = MaskedDuelingDQN(rules_env(), AgentConfig(), seed=0)
+    n_actions = int(rules_env().action_space.n)
+    obs = torch.randn(6, 69)
+    m = torch.ones(6, n_actions, dtype=torch.bool)
+    batch8 = (obs, m, torch.zeros(6, dtype=torch.int64), torch.zeros(6),
+              obs, m, torch.zeros(6), torch.full((6,), 0.99))
+    batch9 = batch8 + (torch.ones(6),)
+    a, _ = agent.compute_loss(batch8)
+    b, _ = agent.compute_loss(batch9)
+    assert torch.isclose(a, b), "unit importance weights changed the loss"
+
+
+def test_prioritised_replay_trains_and_reranks():
+    from dataclasses import replace as dc_replace
+
+    from duel2.agent import AgentConfig, MaskedDuelingDQN
+    from duel2.replay import PrioritisedReplayBuffer
+
+    cfg = dc_replace(AgentConfig(), prioritised_replay=True, total_timesteps=4000,
+                     learning_starts=500, buffer_size=4096)
+    agent = MaskedDuelingDQN(rules_env(), cfg, seed=0)
+    assert isinstance(agent.buffer, PrioritisedReplayBuffer)
+    before = agent.buffer.tree.total()
+    agent.train(4000)
+    assert agent.buffer.tree.total() != before, "priorities never updated"
+    assert len(agent.buffer) > 0

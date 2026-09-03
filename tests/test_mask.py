@@ -135,8 +135,8 @@ def test_masked_target_changes_the_loss():
 
     cur = torch.ones(4, 51, dtype=torch.bool)
     disc = torch.full((4,), 0.99)
-    loss_all = agent.compute_loss((obs, cur, actions, rewards, obs, allowed, terminated, disc))
-    loss_masked = agent.compute_loss((obs, cur, actions, rewards, obs, blocked, terminated, disc))
+    loss_all, _ = agent.compute_loss((obs, cur, actions, rewards, obs, allowed, terminated, disc))
+    loss_masked, _ = agent.compute_loss((obs, cur, actions, rewards, obs, blocked, terminated, disc))
     assert not torch.isclose(loss_all, loss_masked), "the next-state mask had no effect"
 
 
@@ -186,6 +186,6 @@ def test_training_uses_the_current_state_mask_for_predicted_q():
     narrow = allowed.clone(); narrow[:, 5:40] = False
 
     disc = torch.full((4,), 0.99)
-    a = agent.compute_loss((obs, allowed, actions, rewards, obs, next_mask, terminated, disc))
-    b = agent.compute_loss((obs, narrow, actions, rewards, obs, next_mask, terminated, disc))
+    a, _ = agent.compute_loss((obs, allowed, actions, rewards, obs, next_mask, terminated, disc))
+    b, _ = agent.compute_loss((obs, narrow, actions, rewards, obs, next_mask, terminated, disc))
     assert not torch.isclose(a, b), "the current-state mask had no effect on the loss"

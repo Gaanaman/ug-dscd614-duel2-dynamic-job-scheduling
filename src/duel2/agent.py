@@ -41,6 +41,7 @@ from .action_mask import apply_mask
 from .env import DynamicJobShopEnv
 from .metrics import compute_metrics
 from .network import NEG_INF, DuelingQNetwork
+from .replay import PrioritisedReplayBuffer
 from .runtime import training_instance_seed
 
 
@@ -60,6 +61,16 @@ class AgentConfig:
     epsilon_decay_fraction: float = 0.3
     total_timesteps: int = 300_000
     double_q: bool = False
+    prioritised_replay: bool = False
+    """Sample transitions in proportion to their last TD error.
+
+    Schaul et al. (2016). Present in the recipe of the closest published
+    precedent (Han and Yang, 2020, dueling double DQN with prioritised replay)
+    and in Liu et al. (2025). Changes which transitions are sampled, not the
+    learning rule, so the algorithm remains Dueling DQN.
+    """
+    per_alpha: float = 0.6
+    per_beta_start: float = 0.4
     n_step: int = 1
     """Length of the multi-step return used in the bootstrap target.
 
@@ -140,8 +151,13 @@ class MaskedDuelingDQN:
         self.target = DuelingQNetwork(obs_dim, n_actions, cfg.hidden).to(self.device)
         self.target.load_state_dict(self.q.state_dict())
         self.opt = optim.Adam(self.q.parameters(), lr=cfg.learning_rate)
-        self.loss_fn = nn.SmoothL1Loss()
-        self.buffer = ReplayBuffer(cfg.buffer_size, obs_dim, n_actions)
+        self.loss_fn = nn.SmoothL1Loss(reduction="none")
+        self.buffer = (
+            PrioritisedReplayBuffer(cfg.buffer_size, obs_dim, n_actions,
+                                    alpha=cfg.per_alpha, beta_start=cfg.per_beta_start)
+            if cfg.prioritised_replay
+            else ReplayBuffer(cfg.buffer_size, obs_dim, n_actions)
+        )
         self.rng = np.random.default_rng(seed)
 
     # ------------------------------------------------------------ policy
@@ -170,8 +186,18 @@ class MaskedDuelingDQN:
 
     # ------------------------------------------------------------ learning
 
-    def compute_loss(self, batch) -> torch.Tensor:
-        obs, mask, actions, rewards, next_obs, next_mask, terminated, discount = batch
+    def compute_loss(self, batch):
+        """Returns (scalar loss, per-sample TD errors).
+
+        The loss is per-sample so importance-sampling weights can correct the
+        bias that prioritised sampling introduces. With uniform replay every
+        weight is 1 and this reduces exactly to the mean Huber loss.
+        """
+        weights = None
+        if len(batch) == 9:
+            obs, mask, actions, rewards, next_obs, next_mask, terminated, discount, weights = batch
+        else:
+            obs, mask, actions, rewards, next_obs, next_mask, terminated, discount = batch
 
         with torch.no_grad():
             if self.cfg.double_q:
@@ -191,7 +217,11 @@ class MaskedDuelingDQN:
         # actions, so Q(s,a) is only the quantity select_action uses when the
         # same mask is supplied here.
         predicted = self.q(obs, mask).gather(1, actions.unsqueeze(1)).squeeze(1)
-        return self.loss_fn(predicted, target)
+        elementwise = self.loss_fn(predicted, target)
+        if weights is not None:
+            elementwise = elementwise * weights
+        td = (target - predicted).detach().cpu().numpy()
+        return elementwise.mean(), td
 
     def train(self, total_timesteps: int | None = None) -> dict:
         """Run training. Returns a summary dict; per-episode rows go to the logger."""
@@ -257,11 +287,21 @@ class MaskedDuelingDQN:
                     "instance_seed": training_instance_seed(self.seed, episode)})
 
             if step > self.cfg.learning_starts and step % self.cfg.train_frequency == 0:
-                loss = self.compute_loss(self.buffer.sample(self.cfg.batch_size, self.device))
+                if self.cfg.prioritised_replay:
+                    # beta annealed to 1 so the correction is exact by the end,
+                    # the schedule Schaul et al. (2016) recommend
+                    frac = step / max(1, total)
+                    beta = self.cfg.per_beta_start + frac * (1.0 - self.cfg.per_beta_start)
+                    batch = self.buffer.sample(self.cfg.batch_size, self.device, beta=beta)
+                else:
+                    batch = self.buffer.sample(self.cfg.batch_size, self.device)
+                loss, td = self.compute_loss(batch)
                 self.opt.zero_grad()
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.q.parameters(), self.cfg.grad_clip)
                 self.opt.step()
+                if self.cfg.prioritised_replay:
+                    self.buffer.update_priorities(td)
                 losses.append(loss.item())
 
             if step % self.cfg.target_update_interval == 0:
