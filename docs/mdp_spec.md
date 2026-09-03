@@ -138,6 +138,59 @@ The mask is applied in three places and all three are required for correctness:
    common silent bug in masked value-based RL. The next-state mask must therefore be stored in the
    replay buffer alongside the next observation.
 
+### 4.6 Two action formulations, and why the rule formulation is the headline
+
+The catalogue lists *"assign a selected job to a selected machine"* as a **candidate** action, and
+the brief states that "a formulation that departs from them with good reason is credited". Both
+formulations are implemented, both are evaluated, and the departure is evidence-based.
+
+**Formulation A — direct assignment.** `Discrete(K·M + 1) = Discrete(51)`, as specified in §4.
+The agent names the job slot and the machine.
+
+**Formulation B — dispatching-rule selection (headline).** `Discrete(8)`. The agent selects one of
+eight priority rules; the rule then selects the job, and the machine is always the fastest idle
+machine so the choice isolates job selection.
+
+| # | Rule | Priority |
+|---|---|---|
+| 0 | SPT | shortest processing time |
+| 1 | LPT | longest processing time |
+| 2 | EDD | earliest due date |
+| 3 | FCFS | earliest arrival |
+| 4 | WSPT | weighted shortest processing time, `w_j / p_j` |
+| 5 | MS | minimum slack, `d_j − t − p_j` |
+| 6 | CR | critical ratio, `(d_j − t) / p_j` |
+| 7 | ATC | apparent tardiness cost, `(w_j/p_j)·exp(−max(0, d_j − t − p_j)/(k·p̄))`, `k = 2` |
+
+**Why B.** Han and Yang (2020, *IEEE Access* 8:186474–186495) address adaptive job-shop scheduling
+with a dueling double DQN and state that "various heuristic rules are used as available actions",
+reporting that the result "performs better than any single heuristic rule" on 85 OR-Library
+instances. Their design is the closest published precedent to this project, and the rule action
+space is the part of it we can adopt without departing from the bound algorithm. The wider review
+literature reports the same ordering: rule selection over direct operation choice. See
+`docs/report/literature_review.md`, where every citation is verified against Crossref, OpenAlex or
+arXiv.
+
+**The mechanism, in our own terms.** SPT implements a comparison — select the queued job minimising
+processing time. Under Formulation A the network must learn that comparison from a flat
+69-dimensional vector in which each slot occupies a fixed, arbitrary offset, and must rediscover it
+for every pairing of positions. Under Formulation B the rule performs the comparison and the network
+learns only *when* each rule is appropriate. Our measured Q-spread across legal actions of 0.11,
+against episode returns near −2, is the direct evidence that Formulation A was failing at exactly
+this.
+
+**Equivalence.** The two formulations must produce comparable schedules or the comparison is not
+like-for-like. `FixedRule(SPT)` in Formulation B reproduces the Shortest-Job-First baseline in
+Formulation A to within 1e-9 on every metric, and `FixedRule(FCFS)` reproduces First-Come-First-Served.
+Asserted in `tests/test_rules.py`.
+
+**The bar this raises, stated plainly.** Two rules inside the action set already beat all three
+required baselines on the held-out set: ATC (return −1.125, weighted tardiness 95.1) and WSPT
+(−1.187, 104.9), against Shortest-Job-First at −1.352. Because ATC is reachable by a policy that
+always selects it, **beating Shortest-Job-First is not evidence of learning under Formulation B.**
+The meaningful bar is the best single rule, which is also the bar Han and Yang set. Results are
+reported against it.
+
 ## 5. Reward function
 
 At decision epoch `i`, let `Q_i` be the set of pending jobs, `I_i` the set of idle machines and

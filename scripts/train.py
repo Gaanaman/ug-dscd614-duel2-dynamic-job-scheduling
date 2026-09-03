@@ -17,7 +17,13 @@ import json
 from dataclasses import replace
 from pathlib import Path
 
+import torch
 import yaml
+
+# One thread per process. Three seeds run concurrently and each PyTorch process
+# would otherwise spawn a pool sized to every core, oversubscribing the machine
+# and making a nine-run grid roughly an order of magnitude slower.
+torch.set_num_threads(1)
 
 from duel2.agent import AgentConfig, MaskedDuelingDQN
 from duel2.env import DynamicJobShopEnv, EnvConfig
