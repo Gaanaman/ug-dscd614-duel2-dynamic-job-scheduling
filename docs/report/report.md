@@ -296,8 +296,7 @@ evidence of learning. This is the benchmark Han and Yang use.
 | **B + n-step 3** | −1.222, −1.212, −1.269 | **−1.235** | 0.025 | **−0.109** |
 | B + PER + n-step 3 | −1.315, −1.282, −1.263 | −1.287 | 0.021 | −0.161 |
 
-Differences are compared against the combined seed spread, with per-seed dominance checked. Three
-seeds do not support a significance test and none is claimed.
+Differences are compared against the combined seed spread, with per-seed dominance checked.
 
 - **Action space is the largest effect:** B improves on A by 0.245, far beyond any spread, and every
   B variant beats all three required baselines while A beats only First-Come-First-Served.
@@ -378,8 +377,7 @@ a structured encoder — a graph network over the disjunctive representation, or
 queue — which makes cross-job comparison native and yields a size-agnostic policy. That is the
 leading item in further work.
 
-Exploration is uniform over legal actions. No hyperparameter search was conducted and none is
-claimed.
+Exploration is uniform over legal actions. No hyperparameter search was conducted.
 
 ## 7. Limitations and deployment considerations
 
