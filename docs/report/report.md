@@ -307,11 +307,9 @@ seeds do not support a significance test and none is claimed.
 
 ### 5.4 Headline result
 
-The best configuration is **Formulation B with n-step 3 returns**, at −1.235 ± 0.025.
-
-Against the required baselines it wins on every metric and every seed: better than
-First-Come-First-Served by 0.864 in return, Shortest-Job-First by 0.117 and Round Robin by 0.164,
-all beyond the seed spread.
+The best configuration is **Formulation B with n-step 3 returns**, at −1.235 ± 0.025. It wins on
+every metric and every seed against the required baselines: better than First-Come-First-Served by
+0.864 in return, Shortest-Job-First by 0.117 and Round Robin by 0.164, all beyond the seed spread.
 
 **Against the bar it loses.** ATC scores −1.125 against the agent's −1.235, a shortfall of 0.109
 exceeding the seed spread. The agent selects rules better than any weak rule and better than both
