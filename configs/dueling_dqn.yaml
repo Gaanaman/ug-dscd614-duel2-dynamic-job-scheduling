@@ -22,4 +22,4 @@ epsilon:
   end: 0.05
   decay_fraction: 0.3     # of total_timesteps
 
-total_timesteps: 300000     # set from the smoke run on 2 Sep; see docs/hyperparameters.md
+total_timesteps: 1000000    # ~11 min/seed on CPU; the 300k curve was still improving

@@ -37,4 +37,11 @@ deadline_tightness_max: 2.5
 
 horizon: 120.0            # H -- time normalisation constant; E[span] = N/lambda = 91
 max_epochs_factor: 4      # T_max = factor * n_jobs
-allow_noop: true          # ablated in the report; see docs/mdp_spec.md
+allow_noop: false
+# Headline configuration masks the no-op permanently. Measured on seed 0 at 300k
+# steps, held-out set: with the no-op the agent reaches 7.95 average waiting time,
+# WORSE than a random legal policy (6.61), and picks the no-op 46% of the time
+# against an untrained network's 0.7%. Without it the same configuration reaches
+# 4.74, beating FCFS on every metric. The catalogue specifies the action as
+# "assign a selected job to a selected machine", so dispatch-only is faithful to
+# the brief. Reported as an ablation -- see docs/mdp_spec.md section 4.

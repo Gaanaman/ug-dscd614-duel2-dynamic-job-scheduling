@@ -8,7 +8,10 @@ Add a row here and a comment at the top of the adapting file for each entry.
 
 | Source | Licence | Where used | Nature of the adaptation |
 |---|---|---|---|
-| | | | |
+| CleanRL `dqn.py` (Huang et al., 2022) | MIT | `src/duel2/agent.py` | Structural reference for the DQN training loop: replay buffer, target-network sync, ε schedule, update cadence. Written out rather than imported so action masking could be threaded through exploration, greedy selection, the bootstrap target, and the dueling mean. Replay buffer extended with two mask columns. |
+| Wang et al. (2016), dueling architecture | paper | `src/duel2/network.py` | The `Q = V + (A − mean A)` decomposition. Modified so the mean is taken over legal actions only. |
+| Gymnasium (Towers et al., 2023) | MIT | `src/duel2/env.py` | Environment API and `check_env`. The environment itself is the group's own work. |
+| PyTorch | BSD-3 | throughout | Networks and optimisation. |
 
 Example of the in-code form:
 

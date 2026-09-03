@@ -17,6 +17,9 @@ mkdir -p logs/train logs/eval figures models
 echo "==> Environment check"
 python -c "import gymnasium, torch, numpy; print(gymnasium.__version__, torch.__version__, numpy.__version__)"
 
+echo "==> Load check: does the instance distribution have headroom?"
+python scripts/check_load.py --config configs/env_default.yaml
+
 echo "==> Training"
 for seed in "${SEEDS[@]}"; do
   echo "--- seed $seed"

@@ -91,6 +91,44 @@ state where nothing else can happen, and simulated time would never advance. Bec
 epoch requires an idle machine and a pending job, at least one assignment is always available, so
 restricting the no-op can never leave the action set empty.
 
+### The no-op is masked out in the headline configuration
+
+`allow_noop: false` in `configs/env_default.yaml`. The action space stays `Discrete(K·M + 1)` so
+that the specification, the saved networks and the ablation configuration remain compatible, but
+the final entry is permanently masked.
+
+This is an empirical decision, not a preference. Trained under otherwise identical settings for
+300,000 steps on seed 0 and evaluated on the 30 held-out instances:
+
+| Configuration | Avg. waiting | Makespan | Missed | Weighted tardiness | Return |
+|---|---|---|---|---|---|
+| Agent, no-op available | 7.95 | 75.58 | 0.589 | 348.4 | −3.440 |
+| Agent, no-op masked | 4.74 | 69.16 | 0.401 | 154.8 | −1.582 |
+| Uniform-random legal policy | 6.61 | 71.82 | 0.470 | 301.7 | −2.885 |
+
+With the no-op available the agent is **worse than choosing uniformly at random among legal
+moves**, which is the diagnostic that separates a broken agent from an undertrained one. Instrumenting
+the learned policy showed why: it selected the no-op on **46.3%** of decision epochs, against
+**0.7%** for an untrained network of the same architecture. Training was actively teaching the
+agent to stall.
+
+The mechanism is that dispatching at a decision epoch that remains a decision epoch advances the
+clock by `Δt = 0` and therefore returns reward 0, while every path that advances time returns a
+negative reward. Under a discount, an agent facing a stream of negative rewards can reduce its
+discounted return by deferring them. The no-op is the action that makes deferral available, and
+with `γ = 0.99` and a value function that barely discriminated between actions — the measured
+spread of Q across legal actions was 0.11 against episode returns near −3 — the bias was enough to
+dominate the policy.
+
+Masking the no-op removes the deferral action. The catalogue specifies the action as *"assign a
+selected job to a selected machine"*, so a dispatch-only action space is faithful to the brief;
+the no-op was our addition and it is reported here with the evidence that removed it.
+
+**For Limitations:** the no-op is the mechanism by which an agent could hold a fast machine idle
+for an urgent job about to arrive. Masking it forecloses that behaviour. A reward formulation with
+a potential-based shaping term, or a positive per-completion baseline that makes progress
+intrinsically rewarding, would likely let the no-op be retained. We did not have time to test it.
+
 The mask is applied in three places and all three are required for correctness:
 
 1. ε-greedy exploration samples uniformly from valid actions only.
