@@ -313,9 +313,9 @@ that it learned something rather than defaulting to chance.
 spread** — worse than Shortest-Job-First by 0.627 in waiting time and 0.141 in missed-deadline
 fraction; against Round Robin the gap narrows to 0.115 and 19.1 in weighted tardiness.
 
-Utilisation is effectively identical across all five policies (0.886–0.899) and makespan varies by
-under 1%. Both are dominated by the arrival process at this load and discriminate poorly between
-schedulers. We report them because the brief requires them.
+Utilisation (0.886–0.899) and makespan are effectively identical across all five policies: both are
+dominated by the arrival process at this load and discriminate poorly between schedulers. We report
+them because the brief requires them.
 
 ### 5.3 The result that constrains the diagnosis
 
