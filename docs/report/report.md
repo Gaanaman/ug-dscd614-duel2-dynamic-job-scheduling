@@ -415,10 +415,10 @@ trained a Dueling DQN on it under two action formulations, comparing against thr
 dispatching rules and against the best of eight rules, on held-out instances under a protocol fixed
 in advance.
 
-The most useful result was methodological. Three of the four substantive problems — an
-instance-seed overlap with the held-out set, a mask omitted from the loss, and a reward structure
-that rewarded stalling — produced no error message and would have survived into the report unmeasured.
-A uniform-random legal policy and a load-separation check, neither required by the brief, surfaced them.
+The most useful result was methodological. Three substantive problems — an instance-seed overlap with
+the held-out set, a mask omitted from the loss, and a reward structure that rewarded stalling —
+produced no error message and would have survived unmeasured. A uniform-random legal policy and a
+load-separation check, neither required by the brief, surfaced them.
 
 Further work, in order of expected value: replace the fixed ten-slot window with a
 permutation-invariant encoder over the queue; retain the no-op under potential-based shaping;
