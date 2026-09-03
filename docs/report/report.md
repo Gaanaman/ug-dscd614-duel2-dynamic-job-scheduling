@@ -6,23 +6,20 @@ DSCD 614 Reinforcement Learning · Group 11 · Option DUEL-2
 
 ## 1. Introduction
 
-A manufacturing cell or a compute cluster faces the same question many times an hour: a machine
-has just gone free, several jobs are waiting, and one of them has to be chosen. The choice is
-irreversible, its cost is not visible until much later, and the set of waiting jobs changes
-continuously because new work keeps arriving. This is *dynamic* job scheduling, and it differs
-from the classical job-shop problem in that the full workload is never known in advance.
+A manufacturing cell or a compute cluster faces the same question many times an hour: a machine has
+gone free, several jobs are waiting, one must be chosen. The choice is irreversible, its cost is
+invisible until much later, and the waiting set changes continuously as new work arrives. This is
+*dynamic* job scheduling: unlike the classical job-shop problem, the full workload is never known
+in advance.
 
-Industry answers the question with dispatching rules. First-Come-First-Served is fair and
-predictable. Shortest-Job-First is provably optimal for mean flow time on a single machine and is
-strong in practice. Round Robin spreads load evenly. Each rule is a single greedy criterion
-applied identically in every state, which is both why they are trusted and why they can be
-improved on: none of them can trade a small loss now against a larger saving later, because none
-of them models later at all.
+Industry answers with dispatching rules: First-Come-First-Served, Shortest-Job-First (optimal for
+mean flow time on a single machine), and Round Robin. Each applies one greedy criterion identically
+in every state, which is why they are trusted and where they can be improved: none can trade a
+small loss now against a larger saving later, because none models later at all.
 
-This project asks whether a reinforcement learning agent can learn that trade-off. We formulate
-dynamic scheduling on parallel non-identical machines as a Markov decision process, train a
-Dueling Deep Q-Network on it, and compare the learned policy against First-Come-First-Served,
-Shortest-Job-First and Round Robin under a protocol fixed before any result was seen.
+This project asks whether reinforcement learning can learn that trade-off. We formulate dynamic
+scheduling on parallel non-identical machines as an MDP, train a Dueling DQN on it, and compare
+against all three rules under a protocol fixed before any result was seen.
 
 The aims are:
 
@@ -33,62 +30,52 @@ The aims are:
    conditions, reporting variation across seeds for every metric.
 4. To diagnose, rather than conceal, whatever the comparison shows.
 
-The fourth aim did substantial work. Three separate faults were found during development, none of
-which produced an error message, and one of which was a formulation problem rather than a coding
-error. They are reported in Section 6 because the process of finding them is the most transferable
-result the project produced.
+The fourth aim did substantial work. Three faults were found during development, none producing an
+error message, one of them a formulation problem rather than a coding error.
 
 ## 2. Background
 
 ### 2.1 Value-based deep reinforcement learning
 
-Deep Q-Networks (Mnih et al., 2015) approximate the action-value function `Q(s, a)` with a neural
-network trained on the temporal-difference target `y = r + γ · max_{a'} Q_target(s', a')`, using an
-experience replay buffer to decorrelate consecutive samples and a periodically synchronised target
-network to stabilise the regression.
+Deep Q-Networks (Mnih et al., 2015) fit `Q(s, a)` to the target
+`y = r + γ · max_{a'} Q_target(s', a')`, using replay to decorrelate samples and a periodically
+synchronised target network to stabilise the regression.
 
-The dueling architecture (Wang et al., 2016) modifies only the head. A shared trunk feeds two
-streams: a scalar state-value `V(s)` and a vector of advantages `A(s, a)`, recombined as
+The dueling architecture (Wang et al., 2016) modifies only the head: a shared trunk feeds a scalar
+state-value `V(s)` and an advantage vector `A(s, a)`, recombined as
 
 ```
 Q(s, a) = V(s) + ( A(s, a) − mean_{a'} A(s, a') )
 ```
 
-Subtracting the mean resolves the identifiability problem — `V` and `A` are otherwise determined
-only up to a constant — while preserving the ordering of actions, so the greedy policy is
-unchanged.
+Subtracting the mean resolves identifiability — `V` and `A` are otherwise determined only up to a
+constant — while preserving action ordering, so the greedy policy is unchanged.
 
 ### 2.2 Why dueling suits scheduling specifically
 
-The published motivation for dueling is that in many states the choice of action barely matters,
-and estimating a separate `Q` for every action wastes capacity re-deriving a shared state value.
-Scheduling is an unusually clean instance of that condition.
+Dueling is motivated by states where the action choice barely matters, so estimating a separate `Q`
+per action wastes capacity re-deriving a shared state value. Scheduling is a clean instance.
 
-In a scheduling state, value is dominated by congestion: how much work is backed up against how
-much capacity is free. That quantity is identical for every action available in the state. The
-advantage of one assignment over another is frequently small and sometimes exactly zero — when two
-idle machines have the same speed and two queued jobs have the same processing time and weight,
-several actions are genuinely interchangeable. A vanilla network must learn the congestion signal
-once per output, across all 51 of them. The dueling decomposition learns it once in `V(s)` and
-leaves the advantage stream to model only the differences.
+Value here is dominated by congestion — work backed up against capacity free — which is identical
+for every action in the state. The advantage of one assignment over another is often small and
+sometimes exactly zero: two idle machines of equal speed and two jobs of equal processing time and
+weight make several actions interchangeable. A vanilla network learns the congestion signal once
+per output, across all 51. Dueling learns it once in `V(s)` and leaves the advantage stream the
+differences.
 
-Our own measurements support the premise: on the trained network, the spread of Q-values across
-legal actions within a state averaged 0.11 against episode returns near −2, so the between-action
-signal is roughly two orders of magnitude smaller than the between-state signal.
+Our measurements support the premise: on the trained network the Q-spread across legal actions
+averaged 0.11 against episode returns near −2, so the between-action signal is roughly two orders
+of magnitude smaller than the between-state signal.
 
 ### 2.3 Prior work in the domain
 
 Han and Yang (2020) is the closest precedent: a dueling double DQN for adaptive job-shop
-scheduling, including the output-layer action-masking mechanic we adopt. Subsequent work has
-largely converged on the D3QN combination — dueling plus double Q-learning — with recent
-applications to flexible job-shop scheduling with automated guided vehicles reporting lower
-tardiness than composite dispatching rules. A 2025 review in the *Journal of Intelligent
-Manufacturing* surveys the field and notes that Rainbow-style combinations converge more reliably
-on large dynamic instances at higher computational cost.
-
-Action masking under random arrivals is itself an active topic. A 2025 study applies double
-Q-learning with invalid action masking to semiconductor ion-implantation scheduling, and recent
-work addresses masking for dynamic job-shop scheduling with random arrivals and machine failures.
+scheduling, including the output-layer masking mechanic we adopt. Work since has converged on the
+D3QN combination, with applications to flexible job-shop scheduling with automated guided vehicles
+reporting lower tardiness than composite dispatching rules. A 2025 review in the *Journal of
+Intelligent Manufacturing* notes that Rainbow-style combinations converge more reliably on large
+dynamic instances at higher cost. Masking under random arrivals is itself active: a 2025 study
+applies masked double Q-learning to semiconductor ion-implantation scheduling.
 
 **Where we depart.** The literature standard is D3QN. This project is bound to Dueling DQN, so the
 headline configuration uses dueling alone and exposes `double_q` as a configuration flag rather
@@ -132,12 +119,11 @@ factor `/ s_max`; utilisation so far.
 **Global block**, 4 features: queue length `/ N`; simulated time `/ H`; jobs not yet completed
 `/ N`; arrival rate normalised by service capacity.
 
-**Justification.** Every feature is *relational* rather than absolute. Slack and waiting time are
-measured against the current clock; machine state is time-until-free rather than an absolute
+**Justification.** Every feature is *relational* rather than absolute: slack and waiting time are
+measured against the current clock, machine state is time-until-free rather than an absolute
 release time. A policy learned at one point in an episode is therefore applicable at another, which
-is what allows a single network to serve a whole episode across widely varying congestion. An
-absolute encoding would force the network to learn the same dispatching logic separately for each
-region of the clock.
+lets one network serve a whole episode across varying congestion. An absolute encoding would force
+the network to relearn the same dispatching logic for each region of the clock.
 
 ### 3.4 Action space and masking
 
@@ -148,20 +134,18 @@ A mask `μ ∈ {0,1}^51` accompanies every observation: `μ[kM + m] = 1` iff slo
 machine `m` is idle. Because a decision epoch requires both an idle machine and a pending job, at
 least one assignment is always legal, so the mask is never empty.
 
-The mask is applied in three places, and all three are required:
+The mask is applied in five places, and all five are required:
 
-1. ε-greedy exploration samples uniformly from legal actions only. Sampling from all 51 would spend
-   most of the exploration budget on rejected moves.
-2. Greedy selection takes the argmax with illegal entries driven to a large negative value at the
-   output layer.
-3. **The bootstrap target** restricts `max_{a'} Q_target(s', a')` to actions legal in `s'`. This
+1. ε-greedy exploration samples uniformly from legal actions only; sampling from all 51 would spend
+   most of the budget on rejected moves.
+2. Greedy selection argmaxes with illegal entries driven to a large negative value at the output.
+3. **The bootstrap target** restricts `max_{a'} Q_target(s', a')` to actions legal in `s'`, which
    requires storing the next-state mask in the replay buffer.
-
-A fourth requirement is specific to the dueling architecture and is easy to miss: the mean
-subtracted in the aggregation must be taken over *legal* actions only, otherwise arbitrary values
-from unreachable outputs leak into `V(s)`. A fifth follows from it — the current-state mask must
-also be supplied during the update, or `Q(s,a)` in the loss is a different quantity from the one
-the behaviour policy evaluates. Section 6 reports what happened when it was not.
+4. Specific to dueling: the mean subtracted in the aggregation must be over *legal* actions only,
+   or values from unreachable outputs leak into `V(s)`.
+5. Following from (4), the current-state mask must be supplied during the update, or `Q(s,a)` in
+   the loss differs from what the behaviour policy evaluates. Section 6.2 reports what happened
+   when it was not.
 
 **The no-op is masked out in the headline configuration.** This is an empirical decision reported
 with its evidence in Section 6.3.
@@ -204,20 +188,17 @@ extending reach beyond the episode.
 
 **No.** Two violations, both stated plainly because both are consequences of choices we made.
 
-*Queue truncation.* Only the `K = 10` head-of-queue jobs are observable. When more than ten jobs
-are pending, the remainder affect future dynamics but are invisible. The queue is sorted by a fixed
-deterministic key so the window always holds the ten most urgent jobs rather than an arbitrary ten,
-and `|Q_i|` appears in the global block so the agent at least observes the size of what it cannot
-see.
+*Queue truncation.* Only the `K = 10` head-of-queue jobs are observable; beyond that, pending jobs
+affect future dynamics invisibly. The queue is sorted by a fixed key so the window holds the ten
+most urgent rather than an arbitrary ten, and `|Q_i|` is in the global block, so the agent observes
+the size of what it cannot see.
 
-*Unobserved future arrivals.* The realised arrival times of unreleased jobs are not in the state.
-The arrival rate `λ` is included instead, which makes the process Markov *in distribution* — the
-conditional law of future arrivals given the state is fixed — while individual realisations remain
+*Unobserved future arrivals.* Realised arrival times of unreleased jobs are absent. The rate `λ` is
+included instead, making the process Markov *in distribution* while individual realisations remain
 unpredictable.
 
-The environment is therefore a partially observed MDP under any finite state representation, and
-what we have specified captures sufficient statistics rather than the realisation. A recurrent or
-history-stacked encoder is the natural extension.
+The environment is therefore a POMDP under any finite state representation, and what we specify
+captures sufficient statistics rather than realisations.
 
 ## 4. Methodology
 
@@ -227,45 +208,36 @@ The environment is a custom Gymnasium environment implementing the MDP of Sectio
 group. It is an event-driven discrete-event simulator: state advances only to the next completion
 or arrival, and the agent is queried only at decision epochs.
 
-Instance generation is deliberately separated from agent stochasticity. Each episode's job stream
-is drawn from a dedicated RNG seeded by an instance seed independent of the seed controlling
-network initialisation and exploration. Training instance seeds are partitioned into disjoint bands
-of 3000 below 9000; evaluation uses 9000–9029 exclusively. An assertion inside the seed function
-fails loudly on overlap, and two tests cover it.
+Instance generation is separated from agent stochasticity: each episode's job stream comes from a
+dedicated RNG whose seed is independent of the one controlling network initialisation and
+exploration. Training instance seeds occupy disjoint bands of 3000 below 9000; evaluation uses
+9000–9029 exclusively, guarded by an in-function assertion and two tests.
 
-`gymnasium.utils.env_checker.check_env` passes. It is run with the environment's permissive action
-mode, because the checker samples uniformly from the full action space and cannot respect a mask;
-training and evaluation always run in strict mode, where a masked action raises rather than being
-silently rewritten.
+`check_env` passes, run in the environment's permissive action mode because the checker samples
+uniformly and cannot respect a mask. Training and evaluation always run strict, where a masked
+action raises rather than being silently rewritten.
 
-**Environment constants were fixed by measurement, not assumption.** The first configuration used
-`λ = 0.55`, giving utilisation 0.68. Under it, makespan was 97.95 against an arrival-bound makespan
-`N/λ` of 90.9 — the arrival process, not the scheduler, was setting the finish time. Average
-waiting time was 0.58 for First-Come-First-Served against 0.52 for Shortest-Job-First, a difference
-too small for three seeds to resolve. No agent could have demonstrated anything on that
-distribution. Sweeping `λ` and measuring baseline separation produced the final value of 1.0
-(`ρ = 1.24`), where makespan is 69.06 against an arrival bound of 50.0 and the rules separate
-clearly. `scripts/check_load.py` retains this as a permanent gate.
+**Environment constants were fixed by measurement.** The first configuration (`λ = 0.55`) produced
+a makespan of 97.95 against an arrival-bound makespan `N/λ` of 90.9: the arrival process, not the
+scheduler, set the finish time, and the rules were indistinguishable. Sweeping `λ` on baseline
+separation gave the final value of 1.0 (`ρ = 1.24`), where makespan is 69.06 against a bound of
+50.0. Detail in Appendix A.3; `scripts/check_load.py` retains the check as a permanent gate.
 
 ### 4.2 Network architecture
 
-Shared trunk of two 256-unit ReLU layers, feeding a scalar value head and a 51-unit advantage head.
-Recombination follows Section 3.4, with the mean taken over legal actions only, and illegal entries
-driven to a large finite negative value at the output. A finite value rather than `−inf` keeps the
-loss and its gradients well defined when a batch contains states with few legal actions.
-
-Total parameters: approximately 85,000. The network is small because the observation is 69
-dimensional and hand-engineered; capacity was never the binding constraint in any experiment.
+Shared trunk of two 256-unit ReLU layers feeding a scalar value head and a 51-unit advantage head.
+Recombination follows Section 3.4, with the mean over legal actions only and illegal entries driven
+to a large finite negative value — finite rather than `−inf` keeps the loss well defined when a
+batch holds states with few legal actions. Approximately 85,000 parameters; capacity was never the
+binding constraint.
 
 ### 4.3 Training procedure
 
 Standard DQN with replay and a target network, structured after the CleanRL single-file reference
-implementation and written out rather than imported so that masking could be threaded through every
-place it is required. Adam at `1 × 10⁻⁴`; batch size 128; replay capacity 200,000; learning starts
-at 5,000 steps; one gradient step every 4 environment steps; target network synchronised every
-1,000 steps; gradient norm clipped at 10; Huber loss. Exploration decays linearly from `ε = 1.0` to
-`ε = 0.05` over the first 30% of training. One million environment steps per seed, approximately
-eleven minutes on CPU.
+and written out rather than imported so masking could be threaded everywhere it is required. Adam
+at `1 × 10⁻⁴`; batch 128; replay 200,000; learning starts at 5,000; one gradient step per 4
+environment steps; target sync every 1,000; gradient norm clipped at 10; Huber loss. ε decays
+linearly from 1.0 to 0.05 over the first 30% of training. One million steps per seed.
 
 The replay buffer stores seven columns rather than the usual five: observation, **current mask**,
 action, reward, next observation, **next mask**, and terminated. Both masks are load-bearing, for
@@ -287,37 +259,77 @@ job-selection rule rather than mixing in a machine preference. Critically, **eve
 same ten-slot window the agent sees**. A baseline with full queue visibility would not be competing
 under the agent's constraints, and the comparison would be unfair in the baseline's favour.
 
-Two further policies are implemented as diagnostics rather than as required baselines.
-`RandomMasked` selects uniformly among legal actions and provides a floor: a learned policy that
-cannot beat it is broken rather than undertrained. `NeverWait` dispatches at random but never takes
-the no-op, isolating the cost of waiting from the cost of choosing badly. Both are reported because
-both changed decisions.
+Two further policies are diagnostics, not required baselines. `RandomMasked` selects uniformly
+among legal actions and provides a floor: a policy that cannot beat it is broken rather than
+undertrained. `NeverWait` dispatches at random but never waits, isolating the cost of waiting from
+the cost of choosing badly. Both changed decisions, so both are reported.
 
 ### 4.5 Experimental protocol
 
 The protocol was written into `docs/experimental_protocol.md` before any result existed.
 
-Three training seeds: 0, 1, 2, with hyperparameters held identical across them. Evaluation uses 30
-held-out instances, seeds 9000–9029, **identical for every policy and every agent seed**, which
-makes the comparison paired and removes instance difficulty as a confound. Exploration is disabled
-at evaluation: action selection is a deterministic masked argmax.
+Three training seeds (0, 1, 2) with hyperparameters held identical. Evaluation uses 30 held-out
+instances, seeds 9000–9029, **identical for every policy and every agent seed**, making the
+comparison paired and removing instance difficulty as a confound. Exploration is disabled: action
+selection is a deterministic masked argmax. The agent and all baselines are executed by the same
+`harness.run_policy` call through the same metric implementation; baselines are `Policy` objects,
+not a separate script.
 
-The agent and all baselines are executed by the same `harness.run_policy` call on the same episodes
-through the same metric implementation. Baselines are `Policy` objects, not a separate script.
-
-Six metrics are reported: makespan, average waiting time, machine utilisation, missed-deadline
-fraction, weighted tardiness, and cumulative reward. Aggregation returns mean and standard
-deviation across seeds and provides no argument that selects a seed, so reporting a single best run
-is not possible through the supplied interface.
-
-With three seeds, a difference is compared against the seed-to-seed spread rather than subjected to
-a significance test. Three samples do not support one, and we do not claim otherwise.
+Six metrics are reported. Aggregation returns mean and standard deviation across seeds and exposes
+no argument that selects a seed, so reporting a single best run is not possible through the
+interface. With three seeds, differences are compared against the seed spread rather than
+significance-tested; three samples do not support a test and we do not claim one.
 
 ## 5. Results
 
-*(Filled from `logs/eval/aggregate.json` once the three-seed run completes. Every figure in this
-section regenerates from committed logs via `scripts/make_figures.py`, which reads logs only and
-never steps the environment.)*
+Three seeds, one million steps each (~23 min/seed on CPU), evaluated on 30 held-out instances with
+exploration disabled. Every figure regenerates from committed logs.
+
+### 5.1 Training
+
+Figure 1 shows episode return against steps, meaned across seeds with a band at one standard
+deviation. Return rises from −2.58 at 100,000 steps to −1.92 at 700,000 and is flat thereafter
+(−1.93, −1.94, −1.92 over the final three deciles), so the budget was sufficient. Spread across
+seeds stays at or below 0.062, indicating stability under reseeding. Training returns include
+ε = 0.05 and are not comparable to the evaluation numbers.
+
+### 5.2 Evaluation against the baselines
+
+Means over 30 held-out instances; the agent row is meaned across three seeds with the standard
+deviation across them. The dispatching rules are deterministic on a fixed instance set, so their
+spread is exactly zero — a property of the design, not a missing measurement.
+
+| Policy | Makespan | Avg. waiting | Utilisation | Missed | Weighted tardiness | Return |
+|---|---|---|---|---|---|---|
+| Random (diagnostic) | 69.060 | 5.594 | 0.899 | 0.399 | 258.362 | −2.414 |
+| First-Come-First-Served | 69.059 | 5.539 | 0.895 | 0.465 | 212.286 | −2.099 |
+| Round Robin | 69.914 | 4.589 | 0.886 | 0.361 | 130.486 | −1.398 |
+| Shortest-Job-First | 69.652 | 4.077 | 0.887 | 0.256 | 136.361 | −1.352 |
+| **Dueling DQN** | 69.550 ± 0.085 | 4.704 ± 0.034 | 0.891 ± 0.001 | 0.397 ± 0.014 | 149.619 ± 2.188 | −1.543 ± 0.015 |
+
+**The agent beats First-Come-First-Served on every metric, and the differences exceed the seed
+spread.** Waiting time falls from 5.539 to 4.704, missed deadlines from 0.465 to 0.397, weighted
+tardiness from 212.3 to 149.6. It also beats the random legal policy on every metric, establishing
+that it learned something rather than defaulting to chance.
+
+**It loses to Shortest-Job-First and Round Robin, and those differences also exceed the seed
+spread** — worse than Shortest-Job-First by 0.627 in waiting time and 0.141 in missed-deadline
+fraction; against Round Robin the gap narrows to 0.115 and 19.1 in weighted tardiness.
+
+Utilisation is effectively identical across all five policies (0.886–0.899) and makespan varies by
+under 1%. Both are dominated by the arrival process at this load and discriminate poorly between
+schedulers. We report them because the brief requires them.
+
+### 5.3 The result that constrains the diagnosis
+
+Shortest-Job-First achieves a cumulative reward of −1.352 against the agent's −1.543. **A
+hand-written dispatching rule scores better on the agent's own objective than the agent does.**
+
+This separates two explanations that would otherwise be confounded. Were the reward misaligned with
+the metrics, the policy winning on metrics would score poorly on reward. It does not: both rankings
+agree and Shortest-Job-First tops each. The reward is therefore not the problem. The agent fails to
+reach a return demonstrably reachable within its own objective, locating the shortfall in
+optimisation and representation. Section 6.4 takes that up.
 
 ## 6. Discussion
 
@@ -325,31 +337,26 @@ never steps the environment.)*
 
 The most consequential finding was a formulation error, not a coding one.
 
-The action space originally included a no-op, letting the agent decline to dispatch and allow the
-clock to advance. The intent was to permit a genuinely useful behaviour: holding a fast machine
-idle for an urgent job about to arrive. Trained under otherwise identical settings for 300,000
-steps on seed 0, the resulting policy reached an average waiting time of 7.95 on the held-out set —
-**worse than selecting uniformly at random among legal actions**, which scores 6.61.
+The action space originally included a no-op, letting the agent decline to dispatch so the clock
+could advance — intended to permit holding a fast machine for an urgent job about to arrive. At
+300,000 steps on seed 0 the resulting policy reached an average waiting time of 7.95, **worse than
+selecting uniformly at random among legal actions**, which scores 6.61.
 
-That comparison is what made the diagnosis possible. A learned policy that loses to random is
-broken rather than undertrained, and the distinction determines whether the response is more
-compute or an investigation. Instrumenting the policy showed it selecting the no-op at 46.3% of
-decision epochs against 0.7% for an untrained network of the same architecture. Training was
-actively teaching the agent to wait.
+That comparison made the diagnosis possible. A policy that loses to random is broken rather than
+undertrained, and the distinction decides whether the response is more compute or an investigation.
+Instrumenting the policy showed it choosing the no-op at 46.3% of decision epochs against 0.7% for
+an untrained network of the same architecture.
 
-The mechanism follows from the reward structure. Dispatching at an epoch that remains a decision
-epoch advances the clock by `Δt = 0` and returns reward 0, whereas every action that advances time
-returns a negative reward. Under discounting, an agent facing a stream of negative rewards can
-improve its discounted return by deferring them, and the no-op is the action that makes deferral
-available. With a value function that barely discriminated between actions — measured Q-spread
-across legal actions of 0.11, against episode returns near −2 — that bias was sufficient to
-dominate the policy.
+The mechanism follows from the reward. Dispatching at an epoch that remains a decision epoch
+advances the clock by `Δt = 0` and returns reward 0, while every action that advances time returns
+a negative reward. Under discounting, an agent facing negative rewards improves its discounted
+return by deferring them, and the no-op makes deferral available. With a value function barely
+discriminating between actions, that bias dominated.
 
-Masking the no-op removed the deferral action. Under the same configuration and budget, average
-waiting time fell from 7.95 to 4.74 and weighted tardiness from 348.4 to 154.8. The catalogue
-specifies the action as *"assign a selected job to a selected machine"*, so a dispatch-only space
-is faithful to the brief; the no-op was our addition, and it is reported here with the evidence
-that removed it.
+Masking the no-op removed the deferral action: waiting time fell from 7.95 to 4.74 and weighted
+tardiness from 348.4 to 154.8 under the same budget. The catalogue specifies the action as
+*"assign a selected job to a selected machine"*, so a dispatch-only space is faithful to the brief.
+Full figures in `docs/mdp_spec.md` §4.
 
 ### 6.2 Two silent implementation faults
 
@@ -372,15 +379,33 @@ typically fewer than fifteen of the fifty-one actions are legal, so unmasked ε-
 most of its budget on rejected moves. The linear ε decay over the first 30% of training was not
 tuned; no hyperparameter search was conducted, and none is claimed.
 
-The training curves are reported in Section 5. Where the agent's return was still improving at the
-end of the budget, that is stated rather than presented as convergence.
+Return plateaued from 700,000 steps onward and spread across seeds stayed under 0.07 throughout,
+so the run is stable and the budget was adequate. Nothing here is limited by compute.
+
+### 6.4 Why the agent stops short of Shortest-Job-First
+
+Section 5.3 rules out reward misalignment. Two candidate explanations remain, and the evidence
+distinguishes them.
+
+Capacity is not supported: training plateaus with seed spread under 0.07, the signature of a
+converged optimisation rather than an under-parameterised one.
+
+The **action representation** fits the evidence. Shortest-Job-First implements a comparison —
+select the queued job minimising processing time. The agent must learn that from a flat
+69-dimensional vector where each slot sits at a fixed, arbitrary offset. Nothing in a multilayer
+perceptron over concatenated slots makes "compare feature 1 across the ten blocks and take the
+smallest" natural; the comparison must be rediscovered for every pairing of positions. The measured
+Q-spread of 0.11 against returns near −2 is consistent with a network that learned the state value
+well and the between-action ordering poorly.
+
+That predicts the fix: a permutation-invariant encoder over the queue — shared per-slot embedding
+with pooling, or attention over slots — makes cross-slot comparison native rather than positional.
 
 ## 7. Limitations and deployment considerations
 
-**The state is partially observed.** Only the ten most urgent queued jobs are visible, and the
-realised arrival times of unreleased jobs are not in the state at all. The representation captures
-sufficient statistics rather than realisations. A recurrent encoder, or stacking a short history of
-observations, is the natural response and was not attempted.
+**The state is partially observed.** Only the ten most urgent queued jobs are visible, and arrival
+times of unreleased jobs are absent. A recurrent encoder, or stacking a short observation history,
+is the natural response and was not attempted.
 
 **Masking the no-op forecloses a real capability.** An operator sometimes should hold a fast
 machine for an urgent job arriving imminently. The headline agent cannot express that. The
@@ -389,23 +414,21 @@ attractive under discounting; a potential-based shaping term, or a positive comp
 that makes progress intrinsically rewarding, would likely allow the no-op to be retained. Testing
 that was out of scope for the time available.
 
-**The instance distribution is synthetic and single-operation.** Each job requires one operation on
-one machine. Real job shops have multi-operation jobs with precedence constraints, sequence-
-dependent setup times, machine breakdowns, and non-stationary arrival rates. Nothing here
-demonstrates transfer to those settings, and the load parameters were chosen partly to make the
-comparison informative, which is a legitimate experimental choice but not a claim about any real
-workload.
+**The instance distribution is synthetic and single-operation.** Real job shops have
+multi-operation jobs with precedence constraints, sequence-dependent setups, breakdowns, and
+non-stationary arrivals. Nothing here demonstrates transfer, and the load parameters were chosen
+partly to make the comparison informative — a legitimate experimental choice, not a claim about any
+real workload.
 
 **Three seeds is a small sample.** Differences are compared against the seed-to-seed spread. No
 significance test is performed and none would be supported.
 
-**For deployment**, three properties matter more than the headline metric. Inference is a single
-forward pass through an 85,000-parameter network, so the policy is fast enough to sit inside a
-dispatch loop. The action mask is enforced by the environment, so an out-of-distribution
-observation cannot produce an illegal schedule — the failure mode is a poor legal choice, not an
-invalid one. But the policy inherits the arrival distribution it was trained on, and a shift in
-load would require retraining; a deployed system would need the load monitor of
-`scripts/check_load.py` running continuously, with the dispatching rules retained as a fallback.
+**For deployment**, three properties matter more than the headline metric. Inference is one forward
+pass through an 85,000-parameter network, fast enough for a dispatch loop. The mask is enforced by
+the environment, so an out-of-distribution observation cannot produce an illegal schedule — the
+failure mode is a poor legal choice, not an invalid one. But the policy inherits its training
+arrival distribution; a load shift would require retraining, so a deployed system needs the
+`check_load.py` monitor running continuously with the dispatching rules retained as fallback.
 
 ## 8. Conclusion and further work
 
@@ -413,11 +436,10 @@ We formulated dynamic job scheduling on heterogeneous parallel machines as a mas
 trained a Dueling DQN on it, comparing against three dispatching rules on held-out instances under
 a protocol fixed in advance.
 
-The most useful result was methodological. Three of the four substantive problems encountered —
-an instance-seed overlap with the held-out set, a mask omitted from the loss, and a reward
-structure that rewarded stalling — produced no error message and would have survived into the
-report had they not been measured for. A uniform-random legal policy and a load-separation check,
-neither of them required by the brief, are what surfaced them.
+The most useful result was methodological. Three of the four substantive problems — an
+instance-seed overlap with the held-out set, a mask omitted from the loss, and a reward structure
+that rewarded stalling — produced no error message and would have survived into the report unmeasured.
+A uniform-random legal policy and a load-separation check, neither required by the brief, surfaced them.
 
 Further work, in order of expected value: retain the no-op with potential-based reward shaping;
 replace the fixed ten-slot window with a permutation-invariant encoder over the whole queue;
