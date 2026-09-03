@@ -83,3 +83,29 @@ def test_rules_always_choose_the_fastest_idle_machine():
     for i in range(N_RULES):
         _, machine = apply_rule(i, visible, idle, speeds, env.now, env.cfg)
         assert machine == fastest
+
+
+def test_n_step_returns_use_the_matching_discount():
+    """gamma**k must match the k rewards actually accumulated.
+
+    A partial window flushed at an episode boundary carries fewer than n rewards,
+    so a fixed gamma**n would over-discount the bootstrap and bias every target
+    near the end of an episode.
+    """
+    from dataclasses import replace as dc_replace
+
+    import numpy as np
+
+    from duel2.agent import AgentConfig, MaskedDuelingDQN
+
+    for n in (1, 3, 5):
+        agent = MaskedDuelingDQN(
+            rules_env(),
+            dc_replace(AgentConfig(), n_step=n, total_timesteps=2000, learning_starts=10_000),
+            seed=0,
+        )
+        agent.train(2000)
+        used = {round(float(d), 6) for d in agent.buffer.discount[: len(agent.buffer)]}
+        allowed = {round(0.99 ** k, 6) for k in range(1, n + 1)}
+        assert used <= allowed, f"n={n} produced discounts outside gamma^1..gamma^{n}: {used - allowed}"
+        assert round(0.99 ** n, 6) in used or n == 1

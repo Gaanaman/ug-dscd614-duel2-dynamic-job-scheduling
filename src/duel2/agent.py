@@ -29,6 +29,7 @@ Modifications over a standard DQN, all of which the report must describe:
 from __future__ import annotations
 
 import time
+from collections import deque
 from dataclasses import dataclass
 
 import numpy as np
@@ -59,6 +60,15 @@ class AgentConfig:
     epsilon_decay_fraction: float = 0.3
     total_timesteps: int = 300_000
     double_q: bool = False
+    n_step: int = 1
+    """Length of the multi-step return used in the bootstrap target.
+
+    n = 1 is ordinary DQN. Larger n propagates a delayed consequence back to the
+    action that caused it in one update instead of n, which matters here: a
+    dispatch returns reward 0 at the instant it is committed and its cost only
+    appears when the queue drains, tens of decisions later. Declared in
+    docs/hyperparameters.md as a deviation.
+    """
 
 
 class ReplayBuffer:
@@ -86,10 +96,11 @@ class ReplayBuffer:
         self.actions = np.zeros(capacity, dtype=np.int64)
         self.rewards = np.zeros(capacity, dtype=np.float32)
         self.terminated = np.zeros(capacity, dtype=np.float32)
+        self.discount = np.ones(capacity, dtype=np.float32)
         self.pos = 0
         self.full = False
 
-    def add(self, obs, mask, action, reward, next_obs, next_mask, terminated):
+    def add(self, obs, mask, action, reward, next_obs, next_mask, terminated, discount=None):
         i = self.pos
         self.obs[i] = obs
         self.mask[i] = mask
@@ -100,6 +111,7 @@ class ReplayBuffer:
         # terminated only -- a truncated episode is cut off by the harness, not
         # by the task, so its final value is bootstrapped rather than zeroed.
         self.terminated[i] = float(terminated)
+        self.discount[i] = 1.0 if discount is None else float(discount)
         self.pos = (self.pos + 1) % self.capacity
         self.full = self.full or self.pos == 0
 
@@ -111,7 +123,7 @@ class ReplayBuffer:
         t = lambda x, dt=torch.float32: torch.as_tensor(x[idx], dtype=dt, device=device)
         return (t(self.obs), t(self.mask, torch.bool), t(self.actions, torch.int64),
                 t(self.rewards), t(self.next_obs), t(self.next_mask, torch.bool),
-                t(self.terminated))
+                t(self.terminated), t(self.discount))
 
 
 class MaskedDuelingDQN:
@@ -159,7 +171,7 @@ class MaskedDuelingDQN:
     # ------------------------------------------------------------ learning
 
     def compute_loss(self, batch) -> torch.Tensor:
-        obs, mask, actions, rewards, next_obs, next_mask, terminated = batch
+        obs, mask, actions, rewards, next_obs, next_mask, terminated, discount = batch
 
         with torch.no_grad():
             if self.cfg.double_q:
@@ -171,7 +183,9 @@ class MaskedDuelingDQN:
             # a state with no legal next action contributes no bootstrap value
             next_q = torch.where(next_mask.any(dim=1), next_q, torch.zeros_like(next_q))
             next_q = next_q.clamp(min=NEG_INF / 2)
-            target = rewards + self.cfg.gamma * (1.0 - terminated) * next_q
+            # discount is gamma**k for the k actually accumulated, so a partial
+            # n-step return flushed at an episode boundary stays correct.
+            target = rewards + discount * (1.0 - terminated) * next_q
 
         # the CURRENT mask, not ones: the dueling mean is taken over valid
         # actions, so Q(s,a) is only the quantity select_action uses when the
@@ -186,6 +200,24 @@ class MaskedDuelingDQN:
         started = time.time()
 
         episode, ep_return, ep_len, losses, qs = 0, 0.0, 0, [], []
+        nstep: deque = deque(maxlen=self.cfg.n_step)
+
+        def flush(final: bool):
+            """Emit n-step transitions from the pending window."""
+            while nstep:
+                o0, m0, a0 = nstep[0][0], nstep[0][1], nstep[0][2]
+                ret, disc = 0.0, 1.0
+                term_k, no, nm = 0.0, nstep[-1][4], nstep[-1][5]
+                for (_, _, _, r_k, o_k, m_k, t_k) in nstep:
+                    ret += disc * r_k
+                    disc *= self.cfg.gamma
+                    no, nm, term_k = o_k, m_k, t_k
+                    if t_k:
+                        break
+                self.buffer.add(o0, m0, a0, ret, no, nm, term_k, discount=disc)
+                if not final and len(nstep) == self.cfg.n_step:
+                    nstep.popleft(); return
+                nstep.popleft()
         obs, info = env.reset(
             seed=self.seed,
             options={"instance_seed": training_instance_seed(self.seed, 0)},
@@ -197,13 +229,16 @@ class MaskedDuelingDQN:
             action = self.select_action(obs, mask, eps)
             next_obs, reward, terminated, truncated, next_info = env.step(action)
 
-            self.buffer.add(obs, mask, action, reward, next_obs,
-                            next_info["action_mask"], terminated)
+            nstep.append((obs, mask, action, reward, next_obs,
+                          next_info["action_mask"], float(terminated)))
+            if len(nstep) == self.cfg.n_step:
+                flush(final=False)
             obs, info = next_obs, next_info
             ep_return += reward
             ep_len += 1
 
             if terminated or truncated:
+                flush(final=True)
                 m = compute_metrics(env.completed, env.machine_busy_time, ep_return)
                 if self.logger:
                     self.logger.log(

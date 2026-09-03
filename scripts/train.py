@@ -42,6 +42,7 @@ def load_agent_config(path: str, override_steps: int | None) -> AgentConfig:
         epsilon_decay_fraction=float(raw["epsilon"]["decay_fraction"]),
         total_timesteps=int(raw["total_timesteps"]),
         double_q=bool(raw.get("double_q", False)),
+        n_step=int(raw.get("n_step", 1)),
     )
     return replace(cfg, total_timesteps=override_steps) if override_steps else cfg
 
