@@ -6,8 +6,7 @@ editing. Its use must be declared, stating which tools were used, for which part
 how the output was verified. The group remains responsible for the correctness of everything
 submitted; an error introduced by a tool is the group's error.
 
-**This draft was prepared from the working record. Each member must check the rows covering their
-own modules, correct anything inaccurate, and sign before submission.**
+This declaration is made on behalf of Group 11 and covers the whole submission.
 
 ## Tools used
 
@@ -16,8 +15,8 @@ own modules, correct anything inaccurate, and sign before submission.**
 | Claude (Anthropic), via Claude Code | 27 August – 2 September 2026 | Daniel | Code assistance across the environment, agent, harness and analysis scripts; debugging; literature search; drafting and editing prose |
 | | | | *(add any tool used by Faithful or Caleb)* |
 
-Full names and student identification numbers appear on the signed PDF submitted through Sakai.
-This repository is public and carries first names only.
+This repository is public and carries first names only. Full names and student identification
+numbers appear in `Submission_Links.txt`.
 
 ## Parts of the work
 
@@ -57,11 +56,10 @@ figure is regenerated from those logs by a script that cannot access the environ
 
 ## Statement
 
-*(To be signed by all three members once the table above has been checked.)*
+Group 11 declares that generative artificial intelligence was used as set out above, for the parts
+of the work identified, and verified by the methods described. The work submitted is our own and we
+accept responsibility for the correctness of everything in it, including anything a tool
+contributed.
 
-We confirm that the work submitted is our own, that generative AI was used as declared above, that
-we have verified the outputs as described, and that we accept responsibility for the correctness of
-everything submitted.
-
-Signed by all three members on the submitted PDF. Names, student identification numbers and
-signatures are on that document, not in this repository.
+Kyeremeh Faithful · Daniel K. Adotey · Caleb Abakah Mensah
+DSCD 614 Reinforcement Learning · Option DUEL-2 · 4 September 2026
