@@ -35,7 +35,9 @@ replay to decorrelate samples and a target network to stabilise the regression. 
 architecture (Wang et al., 2016) modifies only the head: a shared trunk feeds a scalar state-value
 `V(s)` and an advantage vector `A(s, a)`, recombined as
 
-$$Q(s,a) \;=\; V(s) \;+\; \Bigl( A(s,a) \;-\; \tfrac{1}{|\mathcal{A}|}\sum_{a'} A(s,a') \Bigr)$$
+$$
+Q(s,a) = V(s) + \Bigl( A(s,a) - \tfrac{1}{|\mathcal{A}|}\textstyle\sum_{a'} A(s,a') \Bigr)
+$$
 
 Subtracting the mean resolves identifiability, since `V` and `A` are otherwise determined only up to
 a constant. Action ordering is preserved, so the greedy policy is unchanged.
@@ -144,9 +146,11 @@ At epoch `i`, with `Q_i` the pending set, `I_i` the idle machines and `F_i` the 
 `[t_i, t_{i+1})`:
 
 $$
-r_i \;=\; -\frac{\alpha\,\Delta t_i\,|Q_i| \;+\; \beta\,\Delta t_i\,|I_i|}{Z}
-\;+\; \frac{\gamma_c \sum_{j \in F_i} w_j}{Z}
-\;-\; \frac{\delta \sum_{j \in F_i} w_j \max\!\left(0,\, C_j - d_j\right)}{Z}
+\begin{aligned}
+r_i = \;& -\frac{\alpha\,\Delta t_i\,|Q_i| + \beta\,\Delta t_i\,|I_i|}{Z} \\
+        & + \frac{\gamma_c \sum_{j \in F_i} w_j}{Z} \\
+        & - \frac{\delta \sum_{j \in F_i} w_j \max(0,\, C_j - d_j)}{Z}
+\end{aligned}
 $$
 
 with $Z = N\bar{p}$, the number of jobs times mean processing time, chosen so episode returns are of
