@@ -35,9 +35,7 @@ replay to decorrelate samples and a target network to stabilise the regression. 
 architecture (Wang et al., 2016) modifies only the head: a shared trunk feeds a scalar state-value
 `V(s)` and an advantage vector `A(s, a)`, recombined as
 
-```
-Q(s, a) = V(s) + ( A(s, a) − mean_{a'} A(s, a') )
-```
+$$Q(s,a) \;=\; V(s) \;+\; \Bigl( A(s,a) \;-\; \tfrac{1}{|\mathcal{A}|}\sum_{a'} A(s,a') \Bigr)$$
 
 Subtracting the mean resolves identifiability, since `V` and `A` are otherwise determined only up to
 a constant. Action ordering is preserved, so the greedy policy is unchanged.
@@ -55,20 +53,20 @@ magnitude smaller than the between-state signal.
 
 ### 2.3 Prior work in the domain
 
-**Han and Yang (2020)** is the closest published precedent and it settles three design questions.
+Han and Yang (2020) is the closest published precedent and it settles three design questions.
 Working on adaptive job-shop scheduling, they encode "manufacturing states as multi-channel images"
-into a CNN, use "various heuristic rules as available actions", and train a **dueling double DQN
-with prioritised replay**. On 85 OR-Library instances the method "performs better than any single
+into a CNN, use "various heuristic rules as available actions", and train a dueling double DQN
+with prioritised replay. On 85 OR-Library instances the method "performs better than any single
 heuristic rule", with performance comparable to a genetic algorithm.
 
 Three points follow for this project. Their action space is dispatching-rule selection, not direct
 operation assignment. Their state carries structure over jobs rather than a flat concatenation.
-Their benchmark is **any single heuristic rule**. This is the strong form of the comparison, and much
+Their benchmark is any single heuristic rule. This is the strong form of the comparison, and much
 of the surrounding literature does not adopt it.
 
 The structural-state finding is corroborated: Zhang et al. (2020) embed the disjunctive graph with a
 GNN to obtain a size-agnostic policy, and Smit et al. (2024) survey the GNN literature for
-scheduling. Separately, two 2024–2026 studies apply **reward shaping** to dynamic flexible job-shop
+scheduling. Separately, two 2024–2026 studies apply reward shaping to dynamic flexible job-shop
 scheduling with random arrivals, which is the setting here, one of them combining it with a dueling
 architecture, both motivated by sparse and delayed scheduling rewards.
 
@@ -91,7 +89,7 @@ arrival `a_j`, processing time `p_j`, weight `w_j`, deadline `d_j`, and realised
 
 ### 3.2 Decision epochs
 
-A **decision epoch** occurs when at least one machine is idle *and* at least one job is pending;
+A decision epoch occurs when at least one machine is idle *and* at least one job is pending;
 between epochs the simulator jumps to the next completion or arrival, so episode length scales with
 the number of jobs rather than simulated time. Every dispatching rule completes an episode in exactly
 50 epochs, one per job. `Δt_i = t_{i+1} − t_i` is the elapsed time between consecutive epochs.
@@ -103,10 +101,10 @@ Fixed dimension `d = 5K + 3M + 4`. With `K = 10` visible job slots and `M = 5` m
 The pending queue is sorted by `(deadline, processing time)` and the first `K` jobs occupy the
 observation window.
 
-**Job window**, `K` × 5: processing time `/ p_max`; weight `/ w_max`; slack `(d_j − t_i)/H` clipped
+Job window, `K` × 5: processing time `/ p_max`; weight `/ w_max`; slack `(d_j − t_i)/H` clipped
 to `[−1,1]`; waiting time `(t_i − a_j)/H` clipped to `[0,1]`; occupancy flag.
-**Machine bank**, `M` × 3: time until free `/ p_max`; speed `/ s_max`; utilisation so far.
-**Global**, 4: queue length `/ N`; time `/ H`; jobs outstanding `/ N`; arrival rate over capacity.
+Machine bank, `M` × 3: time until free `/ p_max`; speed `/ s_max`; utilisation so far.
+Global, 4: queue length `/ N`; time `/ H`; jobs outstanding `/ N`; arrival rate over capacity.
 
 **Justification.** Every feature is *relational* rather than absolute: slack and waiting measured
 against the current clock, machine state as time-until-free. A policy learned at one point in an
@@ -124,15 +122,15 @@ machine `m` is idle. Because a decision epoch requires both an idle machine and 
 least one assignment is always legal, so the mask is never empty.
 
 The mask is applied in five places, and all five are required. ε-greedy exploration samples only
-legal actions; greedy selection argmaxes with illegal entries at a large negative value; **the
-bootstrap target** restricts `max_{a'} Q_target(s',a')` to actions legal in `s'`, requiring the
+legal actions; greedy selection argmaxes with illegal entries at a large negative value; the
+bootstrap target restricts `max_{a'} Q_target(s',a')` to actions legal in `s'`, requiring the
 next-state mask in the buffer. The dueling mean is taken over legal actions only, or values from
 unreachable outputs leak into `V(s)`. Finally, the current-state mask must be supplied during the update,
 or `Q(s,a)` in the loss differs from what the behaviour policy evaluates. Appendix A.5 reports what
 happened when it was not.
 
 **Two formulations are implemented and both reported.** Formulation A is the direct assignment just
-described. **Formulation B, the headline, is dispatching-rule selection**: `Discrete(8)` over SPT,
+described. Formulation B, the headline, is dispatching-rule selection: `Discrete(8)` over SPT,
 LPT, EDD, FCFS, WSPT, minimum slack, critical ratio and apparent tardiness cost. The rule selects the
 job; the machine is the fastest idle one for every rule, so the action isolates job selection.
 
@@ -141,23 +139,23 @@ The justification is Han and Yang (2020). The mechanism is that SPT implements a
 queued jobs which, under A, the network must rediscover for every pairing of slot positions in a flat
 vector, while under B the rule performs it. `FixedRule(SPT)` reproduces Shortest-Job-First to within
 1e-9 on every metric and `FixedRule(FCFS)` reproduces First-Come-First-Served, so the formulations
-are shown comparable rather than assumed so. **The no-op is masked out in both**, evidenced in §6.3.
+are shown comparable rather than assumed so. The no-op is masked out in both, evidenced in §6.3.
 
 ### 3.5 Reward
 
 At epoch `i`, with `Q_i` the pending set, `I_i` the idle machines and `F_i` the jobs completing in
 `[t_i, t_{i+1})`:
 
-```
-r_i = − ( α · Δt_i · |Q_i| + β · Δt_i · |I_i| ) / Z
-      + γ_c · Σ_{j ∈ F_i} w_j / Z
-      − δ · Σ_{j ∈ F_i} w_j · max(0, C_j − d_j) / Z
-```
+$$
+r_i \;=\; -\frac{\alpha\,\Delta t_i\,|Q_i| \;+\; \beta\,\Delta t_i\,|I_i|}{Z}
+\;+\; \frac{\gamma_c \sum_{j \in F_i} w_j}{Z}
+\;-\; \frac{\delta \sum_{j \in F_i} w_j \max\!\left(0,\, C_j - d_j\right)}{Z}
+$$
 
-with `Z = N · p̄`, the number of jobs times mean processing time, chosen so episode returns are of
-order 1 across instance sizes. Weights are `α = 1.0`, `β = 0.3`, `γ_c = 1.0`, `δ = 2.0`.
+with $Z = N\bar{p}$, the number of jobs times mean processing time, chosen so episode returns are of
+order 1 across instance sizes. Weights are $\alpha = 1.0$, $\beta = 0.3$, $\gamma_c = 1.0$, $\delta = 2.0$.
 
-**The first term is not shaping.** Summed over an episode, `Σ_i Δt_i·|Q_i|` is the area under the
+**The first term is not shaping.** Summed over an episode, $\sum_i \Delta t_i |Q_i|$ is the area under the
 queue-length curve. That equals the total time all jobs spend waiting, the quantity reported as
 `avg_waiting_time × N`. It is the evaluation objective decomposed over decision epochs, giving a
 dense per-step signal that cannot drift from the metric it is scored on. The identity is asserted
@@ -165,7 +163,7 @@ numerically on a full episode in `tests/test_reward.py`.
 
 ### 3.6 Termination, truncation and discount
 
-**Termination** occurs when all `N` jobs complete: a genuine absorbing state. **Truncation** occurs
+Termination occurs when all `N` jobs complete: a genuine absorbing state. Truncation occurs
 at `T_max = 4N = 200` epochs or when time exceeds `H`. It is a harness limit, not a property of the
 task, so a truncated state is bootstrapped rather than zeroed, and the buffer stores `terminated`
 alone for this reason.
@@ -177,7 +175,7 @@ the front half; `γ = 0.999` adds variance without extending reach.
 
 ### 3.7 Does the Markov property hold?
 
-**No**, and both violations follow from choices we made. *Queue truncation:* only the `K = 10`
+No, and both violations follow from choices we made. *Queue truncation:* only the `K = 10`
 head-of-queue jobs are observable. The queue is sorted by a fixed key so the window holds the ten
 most urgent, and `|Q_i|` is in the global block so the agent observes the size of what it cannot see.
 *Unobserved future arrivals:* realised arrival times of unreleased jobs are absent and `λ` is
@@ -219,21 +217,21 @@ steps; target sync every 1,000; gradient clipped at 10; Huber loss; ε decaying 
 first 30% of training; one million steps per seed. The buffer stores both the current and the next
 mask, for the reasons in §3.4.
 
-Two enhancements are evaluated by ablation and neither changes the algorithm family. **Prioritised
-experience replay** (Schaul et al., 2016) samples in proportion to the last temporal-difference error
+Two enhancements are evaluated by ablation and neither changes the algorithm family. Prioritised
+experience replay (Schaul et al., 2016) samples in proportion to the last temporal-difference error
 with importance-sampling weights annealed to 1. It alters which transitions are drawn, not the
-learning rule. **n-step returns** propagate a delayed consequence to the causing action in one update
+learning rule. n-step returns propagate a delayed consequence to the causing action in one update
 rather than n, which matters because a dispatch returns reward 0 when committed. The buffer stores
 the discount actually applied, so a window flushed at an episode boundary carries `γ^k` for the `k`
-rewards accumulated. `double_q` is exposed as a flag and is **off** throughout, so the reported
+rewards accumulated. `double_q` is exposed as a flag and is off throughout, so the reported
 algorithm is Dueling DQN as the brief requires.
 
 ### 4.4 Baseline design
 
 The three required rules, First-Come-First-Served, Shortest-Job-First and Round Robin, are
 implemented by the group behind a common `Policy` interface. Each chooses a job and then the fastest
-idle machine, so the comparison isolates job selection, and **every rule sees the same ten-slot
-window the agent sees**. A baseline with full queue visibility would not compete under the agent's
+idle machine, so the comparison isolates job selection, and every rule sees the same ten-slot
+window the agent sees. A baseline with full queue visibility would not compete under the agent's
 constraints.
 
 `RandomMasked` is a diagnostic floor, not a required baseline: a policy that cannot beat uniform
@@ -243,14 +241,14 @@ reported.
 **A second, harder bar.** Under Formulation B the eight rules are themselves policies and two beat
 all three required baselines. Any rule in the action set is reachable by a policy that always selects
 it, so beating Shortest-Job-First is not evidence of learning. Results are reported against the
-**best single rule**, the benchmark Han and Yang use.
+best single rule, the benchmark Han and Yang use.
 
 ### 4.5 Experimental protocol
 
 The protocol was written into `docs/experimental_protocol.md` before any result existed.
 
 Three training seeds (0, 1, 2) with hyperparameters held identical. Evaluation uses 30 held-out
-instances, seeds 9000–9029, **identical for every policy and every agent seed**, making the
+instances, seeds 9000–9029, identical for every policy and every agent seed, making the
 comparison paired. Exploration is disabled. Agent and baselines are executed by the same
 `harness.run_policy` call through the same metric implementation. Baselines are `Policy` objects,
 not a separate script. Aggregation returns mean and standard deviation and exposes no argument that
@@ -273,16 +271,16 @@ comparable to evaluation numbers.
 
 | Rule | Avg. waiting | Missed | Weighted tardiness | Return |
 |---|---|---|---|---|
-| SPT (= SJF) | **4.077** | **0.256** | 136.4 | −1.352 |
+| SPT (= SJF) | 4.077 | 0.256 | 136.4 | −1.352 |
 | WSPT | 4.344 | 0.276 | 104.9 | −1.187 |
-| **ATC** | 4.372 | 0.277 | **95.1** | **−1.125** |
+| ATC | 4.372 | 0.277 | 95.1 | −1.125 |
 | EDD | 4.521 | 0.363 | 124.0 | −1.345 |
 | CR | 4.851 | 0.445 | 133.8 | −1.465 |
 | MS | 4.947 | 0.421 | 144.8 | −1.554 |
 | FCFS | 5.539 | 0.465 | 212.3 | −2.099 |
 | LPT | 7.744 | 0.421 | 437.9 | −3.958 |
 
-Two rules inside the action set beat all three required baselines. **ATC is the bar**: any policy
+Two rules inside the action set beat all three required baselines. ATC is the bar: any policy
 in Formulation B can reach −1.125 by always selecting it, so beating Shortest-Job-First is not
 evidence of learning. This is the benchmark Han and Yang use.
 
@@ -293,20 +291,20 @@ evidence of learning. This is the benchmark Han and Yang use.
 | Formulation A, direct assignment | −1.525, −1.544, −1.561 | −1.543 | 0.015 | −0.418 |
 | Formulation B, uniform replay | −1.334, −1.314, −1.247 | −1.298 | 0.037 | −0.173 |
 | B + prioritised replay | −1.309, −1.333, −1.294 | −1.312 | 0.016 | −0.187 |
-| **B + n-step 3** | −1.222, −1.212, −1.269 | **−1.235** | 0.025 | **−0.109** |
+| B + n-step 3 | −1.222, −1.212, −1.269 | −1.235 | 0.025 | −0.109 |
 | B + PER + n-step 3 | −1.315, −1.282, −1.263 | −1.287 | 0.021 | −0.161 |
 
 Differences are compared against the combined seed spread, with per-seed dominance checked.
 
-- **Action space is the largest of the three effects tested:** B improves on A by 0.245, far beyond
+- Action space is the largest of the three effects tested: B improves on A by 0.245, far beyond
   any spread. Every B variant beats all three required baselines. A beats only First-Come-First-Served.
-- **n-step returns help:** +0.064 against a combined spread of 0.062, winning on every seed.
-- **Prioritised replay does not:** −0.014 against a spread of 0.053, no per-seed dominance, and a
+- n-step returns help: +0.064 against a combined spread of 0.062, winning on every seed.
+- Prioritised replay does not: −0.014 against a spread of 0.053, no per-seed dominance, and a
   0.052 degradation when added on top of n-step.
 
 ### 5.4 Headline result
 
-The best configuration is **Formulation B with n-step 3 returns**, at −1.235 ± 0.025. It wins on
+The best configuration is Formulation B with n-step 3 returns, at −1.235 ± 0.025. It wins on
 every metric and every seed against the required baselines: better than First-Come-First-Served by
 0.864 in return, Shortest-Job-First by 0.117 and Round Robin by 0.164, all beyond the seed spread.
 
@@ -340,10 +338,10 @@ the recipe of the closest precedent. The ablation contradicts that: −0.014 aga
 of 0.053 with no per-seed dominance, and a *degradation* of 0.052 when added on top of n-step.
 
 This does not refute Han and Yang. Their CNN-over-images state, 85 static OR-Library instances and
-dueling **double** DQN all differ from our setting, and any could change the value of prioritising
-by temporal-difference error. The result applies to this problem only: **with this state and action
+dueling double DQN all differ from our setting, and any could change the value of prioritising
+by temporal-difference error. The result applies to this problem only: with this state and action
 space, prioritised replay contributes nothing measurable, while n-step returns contribute a real
-improvement.** The review found no scheduling-domain ablation isolating prioritised replay, so this
+improvement. The review found no scheduling-domain ablation isolating prioritised replay, so this
 addresses a gap it identified.
 
 The mechanism fits the diagnosis: reward is 0 when a dispatch is committed and its cost lands tens
@@ -353,8 +351,8 @@ changes which transitions are replayed, not how far credit travels.
 ### 6.3 Three faults found by measuring rather than assuming
 
 Three problems surfaced during development, none producing an error message. The action space
-originally included a no-op. The policy chose it at 46.3% of decision epochs and scored **worse than
-a uniform-random legal policy**, the diagnostic separating a broken agent from an undertrained one.
+originally included a no-op. The policy chose it at 46.3% of decision epochs and scored worse than
+a uniform-random legal policy, the diagnostic separating a broken agent from an undertrained one.
 Training instance seeds for two of three seeds fell inside the held-out evaluation range, which would
 have inflated every headline number. And the loss supplied an all-ones current-state mask, so
 `Q(s,a)` during the update differed from what the behaviour policy evaluated, producing an agent that
@@ -365,8 +363,8 @@ tests now covering each, are in Appendix A.
 
 ### 6.5 Why the agent stops short of the best single rule
 
-Two explanations are ruled out by measurement. **Compute** is not the constraint: return plateaus
-from 700,000 steps with seed spread under 0.07. **Reward misalignment** is not either: the reward
+Two explanations are ruled out by measurement. Compute is not the constraint: return plateaus
+from 700,000 steps with seed spread under 0.07. Reward misalignment is not either: the reward
 ranking and the metric ranking agree and ATC tops both, so a better score on this reward is a better
 schedule.
 
@@ -397,7 +395,7 @@ comparison informative.
 **Three seeds is a small sample.** Differences are compared against the seed spread; no significance
 test is supported.
 
-**For deployment**, three properties matter more than the headline metric. Inference is one forward
+For deployment, three properties matter more than the headline metric. Inference is one forward
 pass through a small network, fast enough for a dispatch loop. The mask is enforced by the
 environment, so an out-of-distribution observation cannot produce an illegal schedule. The failure
 mode is a poor legal choice, not an invalid one. Under Formulation B every action is a named
@@ -420,6 +418,73 @@ Further work, in order of expected value: replace the fixed ten-slot window with
 permutation-invariant encoder over the queue; retain the no-op under potential-based shaping;
 evaluate the `double_q` flag as the D3QN combination the literature favours; and test transfer
 across untrained arrival rates.
+
+---
+
+## 9. References
+
+Han, B.-A., & Yang, J.-J. (2020). Research on adaptive job shop scheduling problems based on
+dueling double DQN. *IEEE Access*, 8, 186474–186495. https://doi.org/10.1109/ACCESS.2020.3029868
+
+Hessel, M., Modayil, J., van Hasselt, H., Schaul, T., Ostrovski, G., Dabney, W., Horgan, D., Piot,
+B., Azar, M., & Silver, D. (2018). Rainbow: Combining improvements in deep reinforcement learning.
+*Proceedings of the AAAI Conference on Artificial Intelligence*, 32(1).
+https://doi.org/10.1609/aaai.v32i1.11796
+
+Huang, S., Dossa, R. F. J., Ye, C., Braga, J., Chakraborty, D., Mehta, K., & Araújo, J. G. (2022).
+CleanRL: High-quality single-file implementations of deep reinforcement learning algorithms.
+*Journal of Machine Learning Research*, 23(274), 1–18.
+
+Liu, C., Chen, K., Wang, H., Yang, B., & Leng, J. (2025). Job shop scheduling by deep dual-Q network
+with prioritized experience replay for resilient production control in flexible manufacturing
+system. *Computers & Operations Research*, 183, 107190. https://doi.org/10.1016/j.cor.2025.107190
+
+Lv, L., Zhang, C., Fan, J., & Shen, W. (2025). Deep reinforcement learning for job shop scheduling
+problems: A comprehensive literature review. *Knowledge-Based Systems*, 321, 113633.
+https://doi.org/10.1016/j.knosys.2025.113633
+
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., Graves, A.,
+Riedmiller, M., Fidjeland, A. K., Ostrovski, G., Petersen, S., Beattie, C., Sadik, A., Antonoglou,
+I., King, H., Kumaran, D., Wierstra, D., Legg, S., & Hassabis, D. (2015). Human-level control
+through deep reinforcement learning. *Nature*, 518(7540), 529–533.
+https://doi.org/10.1038/nature14236
+
+Schaul, T., Quan, J., Antonoglou, I., & Silver, D. (2016). Prioritized experience replay.
+*International Conference on Learning Representations*. https://arxiv.org/abs/1511.05952
+
+Smit, I. G., Zhou, J., Reijnen, R., Wu, Y., Chen, J., Zhang, C., Bukhsh, Z., Zhang, Y., & Nuijten,
+W. (2024). Graph neural networks for job shop scheduling problems: A survey.
+https://arxiv.org/abs/2406.14096
+
+Towers, M., Terry, J. K., Kwiatkowski, A., Balis, J. U., de Cola, G., Deleu, T., Goulão, M.,
+Kallinteris, A., KG, A., Krimmel, M., Perez-Vicente, R., Pierré, A., Schulhoff, S., Tai, J. J.,
+Shen, A. T. J., & Younis, O. G. (2023). *Gymnasium*. https://gymnasium.farama.org
+
+van Hasselt, H., Guez, A., & Silver, D. (2016). Deep reinforcement learning with double Q-learning.
+*Proceedings of the AAAI Conference on Artificial Intelligence*, 30(1).
+https://doi.org/10.1609/aaai.v30i1.10295
+
+Wang, Z., Schaul, T., Hessel, M., van Hasselt, H., Lanctot, M., & de Freitas, N. (2016). Dueling
+network architectures for deep reinforcement learning. *Proceedings of the 33rd International
+Conference on Machine Learning*, 48, 1995–2003. https://arxiv.org/abs/1511.06581
+
+Zhang, C., Song, W., Cao, Z., Zhang, J., Tan, P. S., & Xu, C. (2020). Learning to dispatch for job
+shop scheduling via deep reinforcement learning. *Advances in Neural Information Processing
+Systems*, 33. https://arxiv.org/abs/2010.12367
+
+Zhang, L., Yan, Y., Yang, C., & Hu, Y. (2024). Dynamic flexible job-shop scheduling by multi-agent
+reinforcement learning with reward-shaping. *Advanced Engineering Informatics*, 62, 102872.
+https://doi.org/10.1016/j.aei.2024.102872
+
+Zhang, Z.-Q., Wu, Z.-M., Qian, B., & Hu, R. (2025). A reward-shaping dueling distributed multi-agent
+deep reinforcement learning framework for dynamic flexible job shop scheduling with random job
+arrivals. *Expert Systems with Applications*, 297, 128951.
+https://doi.org/10.1016/j.eswa.2025.128951
+
+Zhang, W., Kong, M., Zhang, Y., Fathollahi-Fard, A. M., & Tian, G. (2025). A revised deep
+reinforcement learning algorithm for parallel machine scheduling problem under multi-scenario due
+date constraints. *Swarm and Evolutionary Computation*, 92, 101808.
+https://doi.org/10.1016/j.swevo.2024.101808
 
 ---
 
