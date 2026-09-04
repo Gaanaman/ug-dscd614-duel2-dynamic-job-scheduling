@@ -148,3 +148,32 @@ def test_prioritised_replay_trains_and_reranks():
     agent.train(4000)
     assert agent.buffer.tree.total() != before, "priorities never updated"
     assert len(agent.buffer) > 0
+
+
+def test_required_baselines_run_in_a_direct_environment_whatever_the_config():
+    """FCFS, SJF and Round Robin must always be evaluable.
+
+    They emit (slot, machine) action indices, so they are only meaningful in a
+    direct-assignment environment. When the headline configuration switched to
+    the rule action space, deriving the baseline environment from the default
+    config turned it into a Discrete(8) space and every required baseline
+    crashed with an index error -- which would have broken run_all.sh, the entry
+    point the rubric requires to reproduce the headline result.
+    """
+    from duel2.baselines import FCFS, RoundRobin, SJF
+    from duel2.env import EnvConfig
+    from duel2.harness import run_policy
+
+    # whatever the default config says, the baselines must still run
+    default = EnvConfig.from_yaml("configs/env_default.yaml")
+    env = DynamicJobShopEnv(dc_replace_mode(default, "direct"))
+    assert env.action_space.n == default.queue_window * default.n_machines + 1
+    for pol in (FCFS(), SJF(), RoundRobin(default.n_machines)):
+        rows, _ = run_policy(pol, env, n_episodes=2)
+        assert len(rows) == 2
+        assert rows[0]["jobs_completed"] == default.n_jobs
+
+
+def dc_replace_mode(cfg, mode):
+    from dataclasses import replace as r
+    return r(cfg, action_mode=mode)

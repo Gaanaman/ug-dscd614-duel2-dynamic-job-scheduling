@@ -53,12 +53,19 @@ def main() -> None:
     ap.add_argument("--out", default="logs/eval/comparison.json")
     ap.add_argument("--variant", action="append", default=[],
                     metavar="NAME=DIR", help="trained rule-action variant, repeatable")
-    ap.add_argument("--direct-models", default="models",
-                    help="directory of direct-action checkpoints")
+    ap.add_argument("--direct-models", default="models/ablation_direct",
+                    help="direct-action checkpoints (Formulation A ablation); the headline "
+                         "rule-action checkpoints live in models/")
     args = ap.parse_args()
 
     base = EnvConfig.from_yaml(args.env_config)
-    direct_env = DynamicJobShopEnv(base)
+    # Both environments are constructed explicitly by action_mode rather than
+    # inheriting whatever the supplied config happens to carry. FCFS, SJF and
+    # Round Robin emit (slot, machine) action indices and are only meaningful in
+    # a direct-assignment environment; the rule policies emit a rule index and
+    # are only meaningful in a rules environment. Deriving either from the config
+    # silently breaks the other when the headline configuration changes.
+    direct_env = DynamicJobShopEnv(replace(base, action_mode="direct"))
     rules_env = DynamicJobShopEnv(replace(base, action_mode="rules"))
     results: dict[str, dict] = {}
 
@@ -76,14 +83,22 @@ def main() -> None:
     per_seed = []
     for s in (0, 1, 2):
         ck = Path(args.direct_models) / f"dueling_dqn_seed{s}.pt"
-        if ck.exists():
+        if not ck.exists():
+            continue
+        try:
             pol = GreedyAgentPolicy.load(ck, direct_env.observation_space.shape[0],
                                          int(direct_env.action_space.n))
-            per_seed.append(run_policy(pol, direct_env, n_episodes=args.episodes)[0])
+        except RuntimeError as e:
+            print(f"WARNING: {ck} does not fit the direct action space ({e.__class__.__name__}). "
+                  "Checkpoints for the two formulations are not interchangeable.")
+            break
+        per_seed.append(run_policy(pol, direct_env, n_episodes=args.episodes)[0])
     if per_seed:
         results["agent:direct"] = agg(per_seed)
 
     # --- rule-action agent variants
+    if not args.variant:
+        args.variant = ["headline=."]
     for spec in args.variant:
         name, _, d = spec.partition("=")
         per_seed = []
