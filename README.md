@@ -132,3 +132,11 @@ run logs.
 
 Third-party code adapted into this repository is attributed at the point of use in the source
 file and listed in [`docs/attribution.md`](docs/attribution.md).
+
+### Validate final experiment artifacts
+
+Before building the submission package, verify that the committed training logs,
+evaluation records, model checkpoints and figures are complete:
+
+```bash
+python scripts/validate_submission_artifacts.py
