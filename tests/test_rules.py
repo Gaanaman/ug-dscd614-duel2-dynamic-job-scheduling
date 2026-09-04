@@ -177,3 +177,19 @@ def test_required_baselines_run_in_a_direct_environment_whatever_the_config():
 def dc_replace_mode(cfg, mode):
     from dataclasses import replace as r
     return r(cfg, action_mode=mode)
+
+
+def test_load_check_runs_whatever_the_default_config_says():
+    """scripts/check_load.py runs the dispatch rules, so it needs a direct env.
+
+    Same fault class as compare_all: deriving the environment from the default
+    config broke the moment the headline configuration became the rule action
+    space.
+    """
+    import subprocess
+    import sys
+
+    r = subprocess.run([sys.executable, "scripts/check_load.py", "--episodes", "2"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr[-600:]
+    assert "FCFS" in r.stdout and "SJF" in r.stdout

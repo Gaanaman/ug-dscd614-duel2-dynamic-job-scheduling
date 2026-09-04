@@ -20,6 +20,8 @@ import argparse
 import statistics as st
 
 from duel2.baselines import FCFS, SJF, RoundRobin
+from dataclasses import replace
+
 from duel2.env import DynamicJobShopEnv, EnvConfig
 from duel2.jobs import EVAL_SEED_START
 from duel2.metrics import compute_metrics
@@ -49,7 +51,9 @@ def main() -> None:
     args = ap.parse_args()
 
     cfg = EnvConfig.from_yaml(args.config)
-    env = DynamicJobShopEnv(cfg)
+    # The dispatch rules emit (slot, machine) action indices, so this check runs
+    # in a direct-assignment environment whatever action_mode the config carries.
+    env = DynamicJobShopEnv(replace(cfg, action_mode="direct"))
     arrival_bound = cfg.n_jobs / cfg.arrival_rate
 
     print(f"capacity {cfg.capacity:.3f} jobs/time-unit   rho {cfg.arrival_rate / cfg.capacity:.2f}")
