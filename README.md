@@ -105,7 +105,7 @@ committed once they exist — every figure traces back to one.
 |---|---|---|
 | Environment, observation construction, action masking, termination | Faithful | [@SteadyHands01](https://github.com/SteadyHands01) |
 | Dueling network, masked training loop, logging, hyperparameters | Daniel | [@Gaanaman](https://github.com/Gaanaman) |
-| Baselines, metrics, evaluation harness, aggregation, figures | Caleb | *(handle to be added)* |
+| Baselines, metrics, evaluation harness, aggregation, figures | Caleb | [@Caleb-Abakah](https://github.com/Caleb-Abakah) |
 
 `src/duel2/reward.py` is written jointly — it is the interface between the
 environment and the metrics.
