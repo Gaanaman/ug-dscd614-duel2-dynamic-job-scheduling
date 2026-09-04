@@ -35,7 +35,9 @@ replay to decorrelate samples and a target network to stabilise the regression. 
 architecture (Wang et al., 2016) modifies only the head: a shared trunk feeds a scalar state-value
 `V(s)` and an advantage vector `A(s, a)`, recombined as
 
-$$Q(s,a) \;=\; V(s) \;+\; \Bigl( A(s,a) \;-\; \tfrac{1}{|\mathcal{A}|}\sum_{a'} A(s,a') \Bigr)$$
+$$
+Q(s,a) = V(s) + \Bigl( A(s,a) - \tfrac{1}{|\mathcal{A}|}\textstyle\sum_{a'} A(s,a') \Bigr)
+$$
 
 Subtracting the mean resolves identifiability, since `V` and `A` are otherwise determined only up to
 a constant. Action ordering is preserved, so the greedy policy is unchanged.
@@ -66,15 +68,12 @@ of the surrounding literature does not adopt it.
 
 The structural-state finding is corroborated: Zhang et al. (2020) embed the disjunctive graph with a
 GNN to obtain a size-agnostic policy, and Smit et al. (2024) survey the GNN literature for
-scheduling. Separately, two 2024–2026 studies apply reward shaping to dynamic flexible job-shop
-scheduling with random arrivals, which is the setting here, one of them combining it with a dueling
-architecture, both motivated by sparse and delayed scheduling rewards.
+scheduling. Separately, two studies apply reward shaping to dynamic flexible job-shop
+scheduling with random arrivals, which is the setting here (Zhang et al., 2024; Zhang et al., 2025),
+the second combining it with a dueling architecture, both motivated by sparse and delayed
+scheduling rewards. Lv et al. (2025) survey the wider field.
 
-Every citation in this report was verified against Crossref, OpenAlex or the arXiv API. The audit,
-including sources whose method detail could not be read behind a paywall, is in
-`docs/report/literature_review.md`.
-
-**Where we depart.** The literature standard is D3QN. This project is bound to Dueling DQN, so the
+Where we depart. The literature standard is D3QN. This project is bound to Dueling DQN, so the
 headline configuration uses dueling alone and exposes `double_q` as a configuration flag rather
 than silently adopting the stronger method. We state this explicitly because a reader familiar with
 the field would otherwise wonder why the obvious enhancement is missing.
@@ -106,7 +105,7 @@ to `[−1,1]`; waiting time `(t_i − a_j)/H` clipped to `[0,1]`; occupancy flag
 Machine bank, `M` × 3: time until free `/ p_max`; speed `/ s_max`; utilisation so far.
 Global, 4: queue length `/ N`; time `/ H`; jobs outstanding `/ N`; arrival rate over capacity.
 
-**Justification.** Every feature is *relational* rather than absolute: slack and waiting measured
+Justification. Every feature is *relational* rather than absolute: slack and waiting measured
 against the current clock, machine state as time-until-free. A policy learned at one point in an
 episode is therefore applicable at another, which lets one network serve a whole episode across
 varying congestion. An absolute encoding would force the network to relearn the same logic for each
@@ -129,7 +128,7 @@ unreachable outputs leak into `V(s)`. Finally, the current-state mask must be su
 or `Q(s,a)` in the loss differs from what the behaviour policy evaluates. Appendix A.5 reports what
 happened when it was not.
 
-**Two formulations are implemented and both reported.** Formulation A is the direct assignment just
+Two formulations are implemented and both reported. Formulation A is the direct assignment just
 described. Formulation B, the headline, is dispatching-rule selection: `Discrete(8)` over SPT,
 LPT, EDD, FCFS, WSPT, minimum slack, critical ratio and apparent tardiness cost. The rule selects the
 job; the machine is the fastest idle one for every rule, so the action isolates job selection.
@@ -147,15 +146,17 @@ At epoch `i`, with `Q_i` the pending set, `I_i` the idle machines and `F_i` the 
 `[t_i, t_{i+1})`:
 
 $$
-r_i \;=\; -\frac{\alpha\,\Delta t_i\,|Q_i| \;+\; \beta\,\Delta t_i\,|I_i|}{Z}
-\;+\; \frac{\gamma_c \sum_{j \in F_i} w_j}{Z}
-\;-\; \frac{\delta \sum_{j \in F_i} w_j \max\!\left(0,\, C_j - d_j\right)}{Z}
+\begin{aligned}
+r_i = \;& -\frac{\alpha\,\Delta t_i\,|Q_i| + \beta\,\Delta t_i\,|I_i|}{Z} \\
+        & + \frac{\gamma_c \sum_{j \in F_i} w_j}{Z} \\
+        & - \frac{\delta \sum_{j \in F_i} w_j \max(0,\, C_j - d_j)}{Z}
+\end{aligned}
 $$
 
 with $Z = N\bar{p}$, the number of jobs times mean processing time, chosen so episode returns are of
 order 1 across instance sizes. Weights are $\alpha = 1.0$, $\beta = 0.3$, $\gamma_c = 1.0$, $\delta = 2.0$.
 
-**The first term is not shaping.** Summed over an episode, $\sum_i \Delta t_i |Q_i|$ is the area under the
+The first term is not shaping. Summed over an episode, $\sum_i \Delta t_i |Q_i|$ is the area under the
 queue-length curve. That equals the total time all jobs spend waiting, the quantity reported as
 `avg_waiting_time × N`. It is the evaluation objective decomposed over decision epochs, giving a
 dense per-step signal that cannot drift from the metric it is scored on. The identity is asserted
@@ -186,7 +187,7 @@ under any finite state representation.
 
 ### 4.1 Environment construction
 
-The environment is a custom Gymnasium environment implementing the MDP of Section 3, written by the
+The environment is a custom Gymnasium (Towers et al., 2023) environment implementing the MDP of Section 3, written by the
 group: an event-driven simulator advancing only to the next completion or arrival, querying the
 agent only at decision epochs.
 
@@ -196,7 +197,7 @@ instance seeds occupy disjoint bands of 3000 below 9000. Evaluation uses 9000–
 guarded by an assertion and two tests. `check_env` passes, run in permissive action mode because the
 checker cannot respect a mask. Training and evaluation always run strict.
 
-**Environment constants were fixed by measurement.** At `λ = 0.55` makespan was 97.95 against an
+Environment constants were fixed by measurement. At `λ = 0.55` makespan was 97.95 against an
 arrival bound `N/λ` of 90.9. The arrival process, not the scheduler, set the finish time, and the
 rules were indistinguishable. Sweeping `λ` gave 1.0 (`ρ = 1.24`), where makespan is 69.06 against a
 bound of 50.0. Appendix A.3; `scripts/check_load.py` retains the check.
@@ -211,6 +212,7 @@ with few legal actions. About 85,000 parameters. Capacity was never the binding 
 ### 4.3 Training procedure
 
 Standard DQN with replay and a target network, structured after the CleanRL single-file reference
+(Huang et al., 2022)
 and written out rather than imported so masking could be threaded everywhere it is required. Adam at
 `1 × 10⁻⁴`; batch 128; replay 200,000; learning starts at 5,000; one gradient step per 4 environment
 steps; target sync every 1,000; gradient clipped at 10; Huber loss; ε decaying 1.0 → 0.05 over the
@@ -219,9 +221,10 @@ mask, for the reasons in §3.4.
 
 Two enhancements are evaluated by ablation and neither changes the algorithm family. Prioritised
 experience replay (Schaul et al., 2016) samples in proportion to the last temporal-difference error
-with importance-sampling weights annealed to 1. It alters which transitions are drawn, not the
+with importance-sampling weights annealed to 1, following Han and Yang (2020) and Liu et al.
+(2025). It alters which transitions are drawn, not the
 learning rule. n-step returns propagate a delayed consequence to the causing action in one update
-rather than n, which matters because a dispatch returns reward 0 when committed. The buffer stores
+rather than n (Hessel et al., 2018), which matters because a dispatch returns reward 0 when committed. The buffer stores
 the discount actually applied, so a window flushed at an episode boundary carries `γ^k` for the `k`
 rewards accumulated. `double_q` is exposed as a flag and is off throughout, so the reported
 algorithm is Dueling DQN as the brief requires.
@@ -238,7 +241,7 @@ constraints.
 selection among legal actions is broken rather than undertrained. It changed decisions, so it is
 reported.
 
-**A second, harder bar.** Under Formulation B the eight rules are themselves policies and two beat
+A second, harder bar. Under Formulation B the eight rules are themselves policies and two beat
 all three required baselines. Any rule in the action set is reachable by a policy that always selects
 it, so beating Shortest-Job-First is not evidence of learning. Results are reported against the
 best single rule, the benchmark Han and Yang use.
@@ -296,8 +299,9 @@ evidence of learning. This is the benchmark Han and Yang use.
 
 Differences are compared against the combined seed spread, with per-seed dominance checked.
 
-- Action space is the largest of the three effects tested: B improves on A by 0.245, far beyond
-  any spread. Every B variant beats all three required baselines. A beats only First-Come-First-Served.
+- Action space is the largest of the three effects tested. Formulation B improves on A by 0.245,
+  far beyond any spread. Every B variant outperforms all three required baselines, whereas A
+  outperforms only First-Come-First-Served.
 - n-step returns help: +0.064 against a combined spread of 0.062, winning on every seed.
 - Prioritised replay does not: −0.014 against a spread of 0.053, no per-seed dominance, and a
   0.052 degradation when added on top of n-step.
@@ -308,7 +312,7 @@ The best configuration is Formulation B with n-step 3 returns, at −1.235 ± 0.
 every metric and every seed against the required baselines: better than First-Come-First-Served by
 0.864 in return, Shortest-Job-First by 0.117 and Round Robin by 0.164, all beyond the seed spread.
 
-**Against the bar it loses.** ATC scores −1.125 against the agent's −1.235, a shortfall of 0.109
+Against the bar it loses. ATC scores −1.125 against the agent's −1.235, a shortfall of 0.109
 exceeding the seed spread. The agent selects rules better than any weak rule and better than both
 required dispatching rules, and does not select them better than always choosing the strongest.
 §6.5 takes up why.
@@ -320,9 +324,9 @@ are dominated by the arrival process and are reported because the brief requires
 
 ### 6.1 The action space was the binding constraint
 
-Formulation B improves on A by 0.245 in return, an order of magnitude larger than any other change
-tested and far beyond the seed spread. Under A the agent beat only First-Come-First-Served. Under B
-every variant beats all three required baselines.
+Formulation B improves on A by 0.245 in return, an order of magnitude larger than any other
+change tested and far beyond the seed spread. Under A the agent outperformed only
+First-Come-First-Served, whereas under B every variant outperforms all three required baselines.
 
 The mechanism is specific. SPT implements a comparison across queued jobs. Under A the network must
 learn that from a flat 69-dimensional vector where each slot occupies a fixed, arbitrary offset, so
@@ -378,21 +382,21 @@ Exploration is uniform over legal actions. No hyperparameter search was conducte
 
 ## 7. Limitations and deployment considerations
 
-**The state is partially observed.** Only the ten most urgent queued jobs are visible, and arrival
+The state is partially observed. Only the ten most urgent queued jobs are visible, and arrival
 times of unreleased jobs are absent. A recurrent encoder, or stacking a short observation history,
 is the natural response and was not attempted.
 
-**Masking the no-op forecloses a real capability.** An operator should sometimes hold a fast machine
+Masking the no-op forecloses a real capability. An operator should sometimes hold a fast machine
 for an urgent job arriving imminently, and the agent cannot express that. The cause is a reward
 whose per-step signal is almost always negative, making deferral attractive under discounting;
 potential-based shaping would likely let the no-op be retained. Testing that was out of scope.
 
-**The instance distribution is synthetic and single-operation.** Real job shops have multi-operation
+The instance distribution is synthetic and single-operation. Real job shops have multi-operation
 jobs with precedence constraints, sequence-dependent setups, breakdowns, and non-stationary
 arrivals. Nothing here demonstrates transfer, and the load parameters were chosen partly to make the
 comparison informative.
 
-**Three seeds is a small sample.** Differences are compared against the seed spread; no significance
+Three seeds is a small sample. Differences are compared against the seed spread; no significance
 test is supported.
 
 For deployment, three properties matter more than the headline metric. Inference is one forward

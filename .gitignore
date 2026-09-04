@@ -20,3 +20,11 @@ submission/
 # third-party paper text used only for prose calibration; not ours to redistribute
 corpus/
 .prose-corpus
+
+# LaTeX build artefacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/main.pdf

@@ -1,0 +1,49 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{cvpr}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{stfloats}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage[natbibapa]{apacite}
+\usepackage[breaklinks=true,bookmarks=false]{hyperref}
+
+\cvprfinalcopy
+\setcounter{page}{1}
+
+\begin{document}
+
+\title{Dynamic Job Scheduling with a Dueling Deep Q-Network}
+
+\author{Kyeremeh Faithful\\22424515\and Daniel K. Adotey\\22424924\and Caleb Abakah Mensah\\22424188}
+
+\maketitle
+
+\begin{abstract}
+Dispatching rules answer the scheduling question with one greedy criterion applied identically in
+every state, and cannot trade a small loss now against a larger saving later. We formulate dynamic
+job scheduling on five heterogeneous parallel machines with Poisson arrivals as a masked-action
+Markov decision process and train a Dueling Deep Q-Network on it under two action formulations:
+direct assignment of a queued job to a machine, and selection among eight dispatching rules. On
+thirty held-out instances across three seeds, the rule formulation with three-step returns reaches
+a return of $-1.235 \pm 0.025$, beating First-Come-First-Served, Shortest-Job-First and Round Robin
+on every metric by margins exceeding the seed spread. It does not beat the strongest rule in its own
+action set, Apparent Tardiness Cost at $-1.125$. An ablation shows three-step returns contribute a
+real improvement while prioritised experience replay contributes nothing measurable, which runs
+against the recipe of the closest published precedent. We report the shortfall, locate it in the
+flat state encoding rather than in compute or reward design, and give the measurements that rule
+out the alternatives.
+\end{abstract}
+
+\input{body}
+
+{\small
+\bibliographystyle{apacite}
+\bibliography{references}
+}
+
+\end{document}
