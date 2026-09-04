@@ -66,9 +66,10 @@ of the surrounding literature does not adopt it.
 
 The structural-state finding is corroborated: Zhang et al. (2020) embed the disjunctive graph with a
 GNN to obtain a size-agnostic policy, and Smit et al. (2024) survey the GNN literature for
-scheduling. Separately, two 2024–2026 studies apply reward shaping to dynamic flexible job-shop
-scheduling with random arrivals, which is the setting here, one of them combining it with a dueling
-architecture, both motivated by sparse and delayed scheduling rewards.
+scheduling. Separately, two studies apply reward shaping to dynamic flexible job-shop
+scheduling with random arrivals, which is the setting here (Zhang et al., 2024; Zhang et al., 2025),
+the second combining it with a dueling architecture, both motivated by sparse and delayed
+scheduling rewards. Lv et al. (2025) survey the wider field.
 
 Every citation in this report was verified against Crossref, OpenAlex or the arXiv API. The audit,
 including sources whose method detail could not be read behind a paywall, is in
@@ -186,7 +187,7 @@ under any finite state representation.
 
 ### 4.1 Environment construction
 
-The environment is a custom Gymnasium environment implementing the MDP of Section 3, written by the
+The environment is a custom Gymnasium (Towers et al., 2023) environment implementing the MDP of Section 3, written by the
 group: an event-driven simulator advancing only to the next completion or arrival, querying the
 agent only at decision epochs.
 
@@ -211,6 +212,7 @@ with few legal actions. About 85,000 parameters. Capacity was never the binding 
 ### 4.3 Training procedure
 
 Standard DQN with replay and a target network, structured after the CleanRL single-file reference
+(Huang et al., 2022)
 and written out rather than imported so masking could be threaded everywhere it is required. Adam at
 `1 × 10⁻⁴`; batch 128; replay 200,000; learning starts at 5,000; one gradient step per 4 environment
 steps; target sync every 1,000; gradient clipped at 10; Huber loss; ε decaying 1.0 → 0.05 over the
@@ -219,9 +221,10 @@ mask, for the reasons in §3.4.
 
 Two enhancements are evaluated by ablation and neither changes the algorithm family. Prioritised
 experience replay (Schaul et al., 2016) samples in proportion to the last temporal-difference error
-with importance-sampling weights annealed to 1. It alters which transitions are drawn, not the
+with importance-sampling weights annealed to 1, following Han and Yang (2020) and Liu et al.
+(2025). It alters which transitions are drawn, not the
 learning rule. n-step returns propagate a delayed consequence to the causing action in one update
-rather than n, which matters because a dispatch returns reward 0 when committed. The buffer stores
+rather than n (Hessel et al., 2018), which matters because a dispatch returns reward 0 when committed. The buffer stores
 the discount actually applied, so a window flushed at an episode boundary carries `γ^k` for the `k`
 rewards accumulated. `double_q` is exposed as a flag and is off throughout, so the reported
 algorithm is Dueling DQN as the brief requires.
