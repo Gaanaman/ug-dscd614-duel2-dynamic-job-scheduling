@@ -1,0 +1,10 @@
+# Standing conventions for the DUEL-2 report. Never re-litigated.
+FAIL | bold in body prose | \\textbf\{ | No bold outside table and figure headings.
+FAIL | bold in markdown body | \*\*[^*]+\*\* | No bold in body prose, including run-in headings.
+FAIL | 'points' as a metric unit | [0-9][0-9.,]*\s*(percentage )?(F1 )?(points?|pts)\b | Absolute values or decimal differences only.
+FAIL | commentary on the writing process | (verified against Crossref|OpenAlex|arXiv API|the audit,|this report was verified|we verified every citation) | The report states findings, not how the document was assembled. Process notes belong in the audit file.
+FAIL | self-reference to the document's own sections | (this report|this document) (states|says|shows|records|carries) | Report the finding; do not narrate the document.
+WARN | 'the baseline' is ambiguous | \bthe baseline\b | Name the rule: FCFS, SJF, Round Robin, or ATC.
+
+IGNORE | first person we/our/us
+IGNORE | em dash
