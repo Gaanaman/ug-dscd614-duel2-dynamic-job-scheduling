@@ -37,9 +37,9 @@ class RewardWeights:
 class RewardTerms:
     """The four components, logged separately.
 
-    Logging the components is what makes the reward-design discussion in the
-    report evidence-based, and it is how you diagnose an agent that maximises
-    reward while losing on the metric.
+    The components are logged separately so the reward-design discussion rests
+    on measurement, and so an agent that maximises reward while losing on the
+    metric can be diagnosed.
     """
 
     waiting: float = 0.0

@@ -1,7 +1,7 @@
 # MDP Specification — DUEL-2 Dynamic Job Scheduling
 
-Freeze this document before training begins. Section 4 of the examination instructions requires
-the formulation to precede implementation, and 16 of the 100 marks are awarded here.
+This document is frozen before training begins, so that the formulation is fixed independently of
+any result it later explains.
 
 Notation is used consistently across this file, the code and the report.
 
@@ -217,9 +217,9 @@ time accumulated over all jobs in the episode. The first term is therefore not a
 signal — it is the true objective decomposed over decision epochs, which is why the agent receives
 dense feedback without the reward becoming inconsistent with the metric it is scored on.
 
-Starting weights: `α = 1.0`, `β = 0.3`, `γ_c = 1.0`, `δ = 2.0`. Record every change and the reason
-in `docs/hyperparameters.md`. An ablation over `β` and `δ` is the cheapest source of Discussion
-material (10 marks) if time allows.
+Starting weights: `α = 1.0`, `β = 0.3`, `γ_c = 1.0`, `δ = 2.0`. Every change and its reason are
+recorded in `docs/hyperparameters.md`. An ablation over `β` and `δ` would isolate the contribution
+of the idleness and tardiness terms.
 
 ## 6. Termination and truncation
 
@@ -265,10 +265,9 @@ Two sources of violation:
    a Markov decision process over the observed sufficient statistics of a partially observed
    arrival process.
 
-State honestly that the second point means the environment is a POMDP under any finite state
-representation, that the chosen representation captures the sufficient statistics rather than the
-realisation, and that a recurrent or history-stacked encoder is the natural extension. This is
-Limitations material, and examiners reward the diagnosis.
+The second point means the environment is a POMDP under any finite state representation. The chosen
+representation captures the sufficient statistics rather than the realisation, and a recurrent or
+history-stacked encoder is the natural extension.
 
 ## 9. Why Dueling DQN suits this problem
 

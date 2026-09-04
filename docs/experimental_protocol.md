@@ -1,8 +1,7 @@
 # Experimental Protocol
 
-14 marks for protocol and seed discipline, 14 for the baseline comparison. Both are won by
-following rules set *before* results exist, so this file is written now and not revised to suit
-the numbers.
+This protocol is fixed before any result exists, so that no rule can be chosen after seeing the
+numbers it would govern.
 
 ## Seeds
 
@@ -39,8 +38,8 @@ the result.
 
 ## Metrics
 
-Reported for every policy, as **mean ± standard deviation across the three seeds**. A single
-number without a measure of spread does not satisfy the rubric.
+Reported for every policy as **mean ± standard deviation across the three seeds**. A single number
+carries no information about run-to-run variation, so every metric is reported with its spread.
 
 | Metric | Definition | Direction |
 |---|---|---|
@@ -59,11 +58,10 @@ leaving the reader to wonder.
 
 State whether an observed difference exceeds the variation across seeds. With three seeds, the
 honest phrasing is a comparison of the difference against the seed spread, not a p-value —
-three samples do not support a significance test and claiming one will be marked down.
+three samples do not support a significance test.
 
-Where the agent does not beat a baseline, **that is a reportable result**. The instructions are
-explicit: a group that diagnoses a failure with evidence scores highly; a group that presents a
-win under an uncontrolled protocol does not. Candidate diagnoses to test if it happens:
+Where the agent does not beat a baseline, **that is a reportable result**, and the diagnosis is
+reported with the evidence supporting it. Candidate diagnoses to test:
 
 - Reward weights favour a term the metric does not measure (compare reward ranking to metric ranking)
 - Insufficient training steps — check whether the training curve has flattened
