@@ -101,11 +101,11 @@ committed once they exist — every figure traces back to one.
 
 ## Module ownership
 
-| Area | Owner |
-|---|---|
-| Environment, observation construction, action masking, termination | Faithful |
-| Dueling network, masked training loop, logging, hyperparameters | Daniel |
-| Baselines, metrics, evaluation harness, aggregation, figures | Caleb |
+| Area | Owner | GitHub |
+|---|---|---|
+| Environment, observation construction, action masking, termination | Faithful | [@SteadyHands01](https://github.com/SteadyHands01) |
+| Dueling network, masked training loop, logging, hyperparameters | Daniel | [@Gaanaman](https://github.com/Gaanaman) |
+| Baselines, metrics, evaluation harness, aggregation, figures | Caleb | *(handle to be added)* |
 
 `src/duel2/reward.py` is written jointly — it is the interface between the
 environment and the metrics.
