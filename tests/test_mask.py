@@ -112,7 +112,8 @@ def test_bootstrap_target_ignores_invalid_next_actions():
     blocked[0, 7] = False
     q = net(obs, blocked)
     assert int(q.argmax()) != 7
-    assert float(q.max()) < 100.0, "the masked action leaked into the maximum"
+    assert q.max().detach().item() < 100.0, (
+    "the masked action leaked into the maximum")
 
 
 def test_masked_target_changes_the_loss():
