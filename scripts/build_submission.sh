@@ -25,6 +25,7 @@ PY
 build() {
   pandoc "$1" -o "$2" --pdf-engine=xelatex --resource-path=.:docs:docs/report:figures \
     -V geometry:margin=1in -V fontsize=11pt \
+    -V header-includes='\hyphenpenalty=10000 \exhyphenpenalty=10000 \tolerance=9999 \emergencystretch=3em' \
     -V mainfont="Georgia" -V monofont="Menlo" -V monofontoptions="Scale=0.85" \
     -V colorlinks=true -V linkcolor=RoyalBlue -V urlcolor=RoyalBlue \
     -V title="$3" -V author="Group 11 — DSCD 614 Reinforcement Learning, University of Ghana" \

@@ -495,9 +495,9 @@ before any of the agent work was meaningful.
 `training_instance_seed` used `1000 + seed × 100000` as a band start, which placed seeds 1 and 2 at
 101,000 and 201,000, both above the held-out range beginning at 9000, because the intended
 wraparound never triggered. We now partition instances into disjoint bands of 3000 below
-`EVAL_SEED_START`, with an in-function assertion. The tests
-`test_training_instances_never_enter_the_held_out_range` and
-`test_each_training_seed_gets_its_own_instances` cover it.
+`EVAL_SEED_START`, with an in-function assertion. Two tests in
+`tests/test_env_api.py` cover it: one asserts that no training instance enters
+the held-out range, the other that each seed draws its own instances.
 
 ### A.2 The loss used an all-ones current-state mask
 
@@ -505,7 +505,8 @@ wraparound never triggered. We now partition instances into disjoint bands of 30
 aggregation subtracts the mean advantage over legal actions, this optimised a different function
 from the one `select_action` evaluated, and the symptom was an agent that degraded with training,
 with waiting time rising from 7.30 to 17.28 over a 20,000-step run. The replay buffer now stores
-the current mask, and `test_training_uses_the_current_state_mask_for_predicted_q` covers it.
+the current mask, and a test in `tests/test_mask.py` fails if the predicted
+`Q(s,a)` is computed with any mask other than the current one.
 
 ### A.3 The environment had no headroom
 
@@ -529,8 +530,10 @@ by deferring them, and the no-op makes deferral available. Masking it dropped wa
 ## Appendix B — Reproduction
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && pip install -e .
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
 bash scripts/run_all.sh
 ```
 
