@@ -4,9 +4,9 @@ Owner: Faithful
 
 Instances come from a dedicated RNG stream so the *instances* an agent sees are
 independent of the *agent's* stochasticity. See docs/experimental_protocol.md:
-training draws from ``seed + 1000``, evaluation uses the fixed held-out range
-9000-9029, and ``assert_held_out`` makes an accidental overlap fail loudly
-rather than silently inflating the result.
+each training seed draws from its own disjoint band of 3000 instance seeds below
+9000, evaluation uses the fixed held-out range 9000-9029, and ``assert_held_out``
+makes an accidental overlap fail loudly rather than silently inflating the result.
 """
 
 from __future__ import annotations

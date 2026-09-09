@@ -140,3 +140,5 @@ evaluation records, model checkpoints and figures are complete:
 
 ```bash
 python scripts/validate_submission_artifacts.py
+```
+

@@ -15,7 +15,7 @@ Each seed controls three independent streams, seeded separately so they do not i
 | Stream | Seeded by | Purpose |
 |---|---|---|
 | network init + exploration | `seed` | agent stochasticity |
-| training job instances | `seed + 1000` | the instances the agent trains on |
+| training job instances | band `[seed*3000, (seed+1)*3000)` | the instances the agent trains on |
 | evaluation job instances | `9000 + episode_index` | **fixed across seeds and policies** |
 
 The third row is the important one. Every policy — the agent at each seed, FCFS, SJF and Round
@@ -24,10 +24,11 @@ one and removes instance difficulty as a confound.
 
 ## Held-out instances
 
-Evaluation instance seeds `9000–9029` are never generated during training. Training draws from
-`seed + 1000` and increments per episode within a range that terminates below 9000. Assert this
-in `harness.py` so an accidental overlap fails loudly rather than silently inflating
-the result.
+Evaluation instance seeds `9000–9029` are never generated during training. Each training seed
+owns a disjoint band of 3000 instance seeds — seed 0 draws from `[0, 3000)`, seed 1 from
+`[3000, 6000)`, seed 2 from `[6000, 9000)` — and the episode index wraps inside that band. Every
+band lies below 9000 by construction. `training_instance_seed` asserts it so an accidental
+overlap fails loudly rather than silently inflating the result.
 
 ## Evaluation settings
 

@@ -51,7 +51,7 @@ Log every change here with the date and the reason.
 | learning rate | 1e-4 | |
 | batch size | 128 | |
 | replay capacity | 200,000 | |
-| learning starts | 5,000 steps | |
+| learning starts | 10,000 steps | |
 | train frequency | every 4 steps | |
 | target update interval | 1,000 steps | |
 | `γ` | 0.99 | justified in `mdp_spec.md` §7 |
@@ -65,7 +65,7 @@ Log every change here with the date and the reason.
 | Purpose | Values |
 |---|---|
 | training seeds | 0, 1, 2 |
-| training instance stream | `seed + 1000` |
+| training instance stream | disjoint band `[seed*3000, (seed+1)*3000)`, below 9000 |
 | evaluation instance stream | 9000–9029 (held out, identical for every policy) |
 
 ## Hyperparameter search declaration
