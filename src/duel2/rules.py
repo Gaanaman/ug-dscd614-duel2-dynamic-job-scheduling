@@ -9,12 +9,12 @@ carries domain structure, the choice stays consistent over a decision, and the
 learned policy inherits a guaranteed floor -- an agent that always picks one
 rule reproduces that rule exactly. See docs/report/references.md.
 
-Our first formulation used the direct (job slot, machine) action space, which is
+The first formulation used the direct (job slot, machine) action space, which is
 the "eligible operation" design. It reached third of five on every metric and
-lost to Shortest-Job-First. The diagnosis in the report was that a flat
-concatenated observation makes cross-slot comparison unnatural for an MLP. A
-rule action space removes that requirement entirely: the comparison is performed
-by the rule, and the network only has to learn WHEN each rule is the right one.
+lost to Shortest-Job-First, because a flat concatenated observation makes
+cross-slot comparison unnatural for an MLP. A rule action space removes that
+requirement: the comparison is performed by the rule, and the network only has
+to learn when each rule is the right one.
 
 Each rule scores the visible jobs and the highest score wins. The machine is
 always the fastest idle machine, identically for every rule, so the choice

@@ -12,8 +12,7 @@ This declaration is made on behalf of Group 11 and covers the whole submission.
 
 | Tool | Version / access date | Used by | Used for |
 |---|---|---|---|
-| Claude (Anthropic), via Claude Code | 27 August – 2 September 2026 | Daniel | Code assistance across the environment, agent, harness and analysis scripts; debugging; literature search; drafting and editing prose |
-
+| Claude (Anthropic), via Claude Code | 27 August – 2 September and 8 September 2026 | Daniel | Code assistance across the environment, agent, harness and analysis scripts; debugging; literature search; drafting and editing prose. The 8 September session revised the report's prose against the eight papers in `corpus/`, corrected two hyperparameter values that had drifted from the code, and repaired the appendix cross-references |
 | ChatGPT (OpenAI), Codex desktop app | 1–4 September 2026 | Faithful | Repository and deliverables audit; development of the read-only submission-artifact validator and its integration test; Git conflict-resolution guidance; reproducibility checks; and diagnosis of the PDF build workflow. Suggested changes were reviewed manually, the validator was run directly, and the full test suite passed with 43 tests. |
 
 This repository is public and carries first names only. Full names and student identification

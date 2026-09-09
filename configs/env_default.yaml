@@ -51,9 +51,8 @@ allow_noop: false
 # dynamic job-shop scheduling report this consistently outperforms selecting an
 # eligible operation directly. See src/duel2/rules.py and the report.
 #
-# Honest framing: two rules in the set (ATC, WSPT) already beat all three
-# required baselines, so the agent reaching SJF-level performance proves nothing.
-# The bar is the BEST SINGLE RULE -- ATC, return -1.125 -- which the agent can
-# match by always choosing it. The question is whether switching rules by state
-# beats any fixed rule.
+# Two rules in the set (ATC, WSPT) already beat all three required baselines, so
+# an agent reaching SJF-level performance proves nothing. The bar is the best
+# single rule, ATC at return -1.125, which the agent can match by always choosing
+# it. The question is whether switching rules by state beats any fixed rule.
 action_mode: rules

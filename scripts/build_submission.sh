@@ -31,7 +31,11 @@ build() {
     -V date="4 September 2026" --toc --toc-depth=2 2>&1 | grep -iv "Missing character" || true
   echo "  $(basename "$2")"
 }
-build /tmp/report_build.md             submission/Project_Report.pdf            "Dynamic Job Scheduling with a Dueling Deep Q-Network"
+# The report is the two-column CVPR build, which carries the appendix and the figures.
+# Building it with pandoc here would drop both, and the cross-references with them.
+python3 scripts/build_paper.py
+cp paper/main.pdf submission/Project_Report.pdf
+echo "  Project_Report.pdf"
 build docs/hyperparameters.md          submission/Hyperparameters_and_Seeds.pdf "Hyperparameters and Seeds — DUEL-2"
 build docs/ai_use_declaration.md       submission/AI_Use_Declaration.pdf        "Declaration of Generative AI Use — DUEL-2"
 build docs/report/literature_review.md submission/Literature_Review.pdf         "Methodological Literature Review — DUEL-2"

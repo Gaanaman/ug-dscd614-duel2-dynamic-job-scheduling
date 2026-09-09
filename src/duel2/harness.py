@@ -103,9 +103,8 @@ def exceeds_seed_variation(agent_stat: dict, baseline_stat: dict) -> bool:
     """Whether a difference is larger than the seed-to-seed variation.
 
     With three seeds this is a comparison against the spread, not a significance
-    test. Three samples do not support one, and claiming otherwise will be marked
-    down. Phrase the finding in the report as "the difference exceeds / does not
-    exceed the variation across seeds".
+    test: three samples do not support one. A True result means the difference
+    exceeds the variation across seeds, and nothing stronger.
     """
     diff = abs(agent_stat["mean"] - baseline_stat["mean"])
     spread = agent_stat["std"] + baseline_stat["std"]

@@ -1,7 +1,7 @@
 # Agent configuration. Held IDENTICAL across seeds -- a per-seed configuration
 # invalidates the comparison.
 algorithm: dueling_dqn
-double_q: false           # decide and state it; dueling and double are independent
+double_q: false           # dueling and double are independent; this run is dueling only
 
 network:
   hidden: [256, 256]

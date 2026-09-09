@@ -132,6 +132,33 @@ def substitute_glyphs(text: str) -> str:
     return "".join(out).replace("1 $\\times$ 10-4", "$1\\times10^{-4}$")
 
 
+def render_appendix(md: str) -> str:
+    """Convert the appendices into a \\appendix block.
+
+    They sit after the reference list in the markdown, so the body split drops
+    them. Section A becomes \\section under \\appendix, which numbers its
+    subsections A.1 to A.4 and makes the cross-references in the body resolve.
+    """
+    start = md.find("## Appendix A")
+    if start < 0:
+        return "% no appendix in the markdown source\n"
+    src = md[start:]
+    src = re.sub(r"^## Appendix [AB] . ", "## ", src, flags=re.M)
+    src = re.sub(r"^### A\.\d+ ", "### ", src, flags=re.M)
+    for pat, rep in CITES:
+        src = re.sub(pat, rep, src)
+    # --no-highlight: the Shaded/Highlighting environments pandoc emits for a
+    # fenced block need packages cvpr.sty does not load. Plain verbatim is enough.
+    tex = subprocess.run(["pandoc", "-f", "markdown", "-t", "latex",
+                          "--wrap=preserve", "--no-highlight"],
+                         input=src, capture_output=True, text=True, check=True).stdout
+    tex = re.sub(r"\\subsection\{", r"\\section{", tex)
+    tex = re.sub(r"\\subsubsection\{", r"\\subsection{", tex)
+    tex = re.sub(r"\\tightlist\n", "", tex)
+    tex = re.sub(r"\\textbf\{([^}]*)\}", r"\\1", tex)
+    return "\\appendix\n" + substitute_glyphs(tex).strip() + "\n"
+
+
 def main() -> None:
     md = SRC.read_text()
     body = md.split("## 9. References")[0]     # bibtex renders the list
@@ -164,6 +191,7 @@ def main() -> None:
         print(f"  warning: unsettable characters remain: {residual}")
 
     (OUT / "body.tex").write_text(tex.strip() + "\n")
+    (OUT / "appendix.tex").write_text(render_appendix(md))
 
     for _ in range(2):
         subprocess.run(["pdflatex", "-interaction=nonstopmode", "main"],

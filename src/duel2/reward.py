@@ -13,11 +13,10 @@ metrics, and both owners have to agree on it.
     dt   t_{i+1} - t_i
     Z    n_jobs * mean processing time, so returns are O(1) across instance sizes
 
-The first term is worth understanding rather than treating as shaping: summed
-over an episode, ``sum_i dt_i * |Q_i|`` telescopes to the total waiting time
-accumulated across all jobs. It is the true objective decomposed over decision
-epochs, which is why the agent gets a dense signal that stays consistent with the
-metric it is scored on. tests/test_reward.py asserts that identity holds.
+The first term is not shaping. Summed over an episode, ``sum_i dt_i * |Q_i|``
+telescopes to the total waiting time accumulated across all jobs, so it is the
+objective itself decomposed over decision epochs. tests/test_reward.py asserts
+that identity.
 """
 
 from __future__ import annotations

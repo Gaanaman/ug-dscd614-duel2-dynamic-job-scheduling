@@ -13,13 +13,11 @@ Two details that are easy to get wrong and are both asserted in tests/test_mask.
    output-layer masking described by Wang et al. (2016) for the dueling
    architecture and applied to scheduling with masking by Han and Yang (2020).
 
-Why dueling suits this problem, for the Background section: the value of a
-scheduling state is dominated by congestion -- how much work is backed up
-against how much capacity is free -- while the advantage of one assignment over
-another is often small and sometimes exactly zero, because two idle machines and
-two similar jobs make several actions equivalent. Vanilla DQN re-learns that
-shared state value once per action across all 51 outputs. The decomposition
-learns congestion once and lets the advantage stream model only the differences.
+The decomposition suits this problem because the value of a scheduling state is
+dominated by congestion, which is the same for every action available in that
+state, while the advantage of one assignment over another is often small and
+sometimes zero. Vanilla DQN re-learns the shared state value once per action
+across all 51 outputs; dueling learns it once.
 """
 
 from __future__ import annotations

@@ -11,7 +11,7 @@ implementation (Huang et al., 2022, MIT licence). It is written here rather than
 imported so that action masking can be threaded through every place it is
 needed. See docs/attribution.md.
 
-Modifications over a standard DQN, all of which the report must describe:
+Modifications over a standard DQN:
 
   1. Dueling value/advantage heads with the mean taken over valid actions only
      (network.py).
@@ -22,8 +22,8 @@ Modifications over a standard DQN, all of which the report must describe:
      described in docs/mdp_spec.md section 4.
   4. Optional double-Q targets (van Hasselt et al., 2016), off by default. The
      brief binds the algorithm to Dueling DQN, so the headline run is dueling
-     alone; the flag exists so the ablation in the Discussion is a config change
-     rather than a code change.
+     alone; the flag exists so the ablation is a config change rather than a
+     code change.
 """
 
 from __future__ import annotations
