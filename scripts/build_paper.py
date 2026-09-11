@@ -30,6 +30,7 @@ CITES = [
      r"\\citep{zhang2024shaping,zhang2025dueling}"),
     (r"\(Towers et al\., 2023\)", r"\\citep{towers2023gymnasium}"),
     (r"\(Huang et al\., 2022\)", r"\\citep{huang2022cleanrl}"),
+    (r"\(van Hasselt et al\., 2016\)", r"\\citep{vanhasselt2016}"),
 ]
 
 # pdflatex cannot set these; apacite and cvpr.sty give no better route than substitution

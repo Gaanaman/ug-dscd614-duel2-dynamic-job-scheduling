@@ -164,12 +164,11 @@ machine so the choice isolates job selection.
 
 **Why B.** Han and Yang (2020, *IEEE Access* 8:186474–186495) address adaptive job-shop scheduling
 with a dueling double DQN and state that "various heuristic rules are used as available actions",
-reporting that the result "performs better than any single heuristic rule" on 85 OR-Library
-instances. Their design is the closest published precedent to this project, and the rule action
-space is the part of it we can adopt without departing from the bound algorithm. The wider review
-literature reports the same ordering: rule selection over direct operation choice. See
-`docs/report/literature_review.md`, where every citation is verified against Crossref, OpenAlex or
-arXiv.
+reporting that the result "performs better than any single heuristic rule for large scale
+problems" on 85 OR-Library instances. Their design is the closest published precedent to this
+project, and the rule action space is the part of it we can adopt without departing from the bound
+algorithm. The wider review literature reports the same ordering: rule selection over direct
+operation choice. See `docs/report/literature_review.md`.
 
 **The mechanism, in our own terms.** SPT implements a comparison — select the queued job minimising
 processing time. Under Formulation A the network must learn that comparison from a flat

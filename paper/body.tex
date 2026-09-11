@@ -51,8 +51,9 @@ returns near -2, two orders of magnitude smaller than the between-state signal.
 The closest published precedent is \citet{hanyang2020}, and three of our design decisions follow
 from it. Working on adaptive job-shop scheduling, they encode ``manufacturing states as
 multi-channel images'' into a CNN, use ``various heuristic rules as available actions'', and train a
-dueling double DQN with prioritised replay. On 85 OR-Library instances the method ``performs better
-than any single heuristic rule''. Their action space is therefore dispatching-rule selection rather
+dueling double DQN with prioritised replay. On 85 OR-Library instances the method reaches optimal
+solutions on the small instances and ``performs better than any single heuristic rule for large
+scale problems''. Their action space is therefore dispatching-rule selection rather
 than direct operation assignment, and their state representation is structured over jobs rather
 than flat. Their benchmark is any single heuristic rule, the strong form of the comparison.
 
@@ -212,8 +213,8 @@ with importance-sampling weights annealed to 1, following \citet{hanyang2020} an
 delayed consequence to the causing action in one update rather than n \citep{hessel2018rainbow}, which
 matters here because a dispatch returns reward 0 at the moment it is committed. The buffer stores
 the discount actually applied, so a window flushed at an episode boundary uses \texttt{$\gamma$\^{}k} for the \texttt{k}
-rewards accumulated. \texttt{double\_q} is off throughout, so the algorithm we report is Dueling DQN as the
-brief requires.
+rewards accumulated. \texttt{double\_q} \citep{vanhasselt2016} is off throughout, so the algorithm we
+report is Dueling DQN as the brief requires.
 
 \subsection{Baseline design}\label{baseline-design}
 

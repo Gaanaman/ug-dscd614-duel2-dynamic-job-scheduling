@@ -9,9 +9,9 @@ Two details that are easy to get wrong and are both asserted in tests/test_mask.
 1. The mean is taken over *valid* actions only. Averaging over all K*M+1 entries
    lets arbitrary values from masked, unreachable actions leak into V(s).
 2. Invalid entries are set to -inf on the way out, so every argmax and max
-   downstream ignores them without the caller having to remember. This is the
-   output-layer masking described by Wang et al. (2016) for the dueling
-   architecture and applied to scheduling with masking by Han and Yang (2020).
+   downstream ignores them without the caller having to remember. Wang et al.
+   (2016) define the dueling head over the full action set; restricting the
+   mean to legal actions is this project's adaptation for a masked space.
 
 The decomposition suits this problem because the value of a scheduling state is
 dominated by congestion, which is the same for every action available in that

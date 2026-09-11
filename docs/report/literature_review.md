@@ -15,10 +15,9 @@ Where a number could not be read from an accessible abstract or open-access copy
 **Han, B.-A., & Yang, J.-J. (2020). Research on Adaptive Job Shop Scheduling Problems Based on
 Dueling Double DQN. *IEEE Access*, 8, 186474–186495.**
 DOI: [10.1109/ACCESS.2020.3029868](https://doi.org/10.1109/ACCESS.2020.3029868) ·
-VERIFIED (Crossref + OpenAlex; 240 citations)
+Full text, 22 pages, open access CC-BY
 
-This is the closest published precedent to DUEL-2 and it is worth reading in full. From the
-abstract, verbatim on the three design axes:
+This is the closest published precedent to DUEL-2. Verbatim on the three design axes:
 
 | Axis | What Han & Yang do |
 |---|---|
@@ -66,7 +65,8 @@ queue lengths, which a fixed 10-slot window cannot.
 
 ## 3. Action space
 
-- Han & Yang (2020): heuristic rules as actions, beating any single rule. VERIFIED abstract.
+- Han & Yang (2020): heuristic rules as actions, beating any single rule on the large-scale
+  instances. Full text.
 - **Liu, R., Piplani, R., & Toro, C. (2023). A deep multi-agent reinforcement learning approach to
   solve dynamic job shop scheduling problem.** *Computers & Operations Research*, 159, 106294.
   DOI: [10.1016/j.cor.2023.106294](https://doi.org/10.1016/j.cor.2023.106294) ·
@@ -144,7 +144,7 @@ That is an honest gap, and it makes our own ablation a genuine, if small, contri
 ## 6. Evaluation protocol
 
 - Han & Yang (2020): **85 OR-Library instances**, compared against individual heuristic rules and a
-  genetic algorithm. VERIFIED from abstract.
+  genetic algorithm. Full text.
 - **Lv, L., Zhang, C., Fan, J., & Shen, W. (2025). Deep reinforcement learning for job shop
   scheduling problems: A comprehensive literature review.** *Knowledge-Based Systems*, 321, 113633.
   DOI: [10.1016/j.knosys.2025.113633](https://doi.org/10.1016/j.knosys.2025.113633) · VERIFIED
@@ -166,13 +166,14 @@ Ranked by expected value against effort, given the brief binds us to Dueling DQN
 
 | # | Change | Evidence | Status |
 |---|---|---|---|
-| 1 | Dispatching-rule action space | Han & Yang (2020) — beats any single rule with rules as actions | **Done.** Return −1.543 → −1.298 |
+| 1 | Dispatching-rule action space | Han & Yang (2020) — beats any single rule on large instances with rules as actions | **Done.** Return −1.543 → −1.298 |
 | 2 | **Prioritised experience replay** | In the anchor recipe (DDDQNPR) and in Liu et al. (2025); Schaul et al. (2016) for the mechanism | **The clear next step.** Not an algorithm change — dueling remains the algorithm |
 | 3 | n-step returns | Addresses the delayed-credit pathology we measured; Rainbow ablation (Hessel 2018) for the mechanism | **Implemented, untested** |
 | 4 | Reward shaping for sparse/delayed reward | Zhang et al. (2025, ESWA) — dueling + shaping + random arrivals, our exact setting | Candidate if time allows |
 | 5 | Structured state encoder (GNN or permutation-invariant pooling) | Smit et al. (2024) survey; Zhang et al. (2020) L2D | Correct long-term fix; too large for the remaining time. Belongs in Further Work |
 
-**Expected outcome.** Han & Yang's claim is that DDDQNPR beats *any single heuristic rule*. Our
+**Expected outcome.** Han & Yang's claim is that DDDQNPR beats *any single heuristic rule* on the
+large-scale instances. Our
 target is therefore to beat ATC (return −1.125), and reaching parity with it would already match
 the weaker reading of their result. **What margin to expect is `[not verified]`** — I could not
 read a like-for-like percentage from an accessible source, and I will not invent one.

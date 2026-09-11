@@ -57,8 +57,9 @@ returns near −2, two orders of magnitude smaller than the between-state signal
 The closest published precedent is Han and Yang (2020), and three of our design decisions follow
 from it. Working on adaptive job-shop scheduling, they encode "manufacturing states as
 multi-channel images" into a CNN, use "various heuristic rules as available actions", and train a
-dueling double DQN with prioritised replay. On 85 OR-Library instances the method "performs better
-than any single heuristic rule". Their action space is therefore dispatching-rule selection rather
+dueling double DQN with prioritised replay. On 85 OR-Library instances the method reaches optimal
+solutions on the small instances and "performs better than any single heuristic rule for large
+scale problems". Their action space is therefore dispatching-rule selection rather
 than direct operation assignment, and their state representation is structured over jobs rather
 than flat. Their benchmark is any single heuristic rule, the strong form of the comparison.
 
@@ -219,8 +220,8 @@ with importance-sampling weights annealed to 1, following Han and Yang (2020) an
 delayed consequence to the causing action in one update rather than n (Hessel et al., 2018), which
 matters here because a dispatch returns reward 0 at the moment it is committed. The buffer stores
 the discount actually applied, so a window flushed at an episode boundary uses `γ^k` for the `k`
-rewards accumulated. `double_q` is off throughout, so the algorithm we report is Dueling DQN as the
-brief requires.
+rewards accumulated. `double_q` (van Hasselt et al., 2016) is off throughout, so the algorithm we
+report is Dueling DQN as the brief requires.
 
 ### 4.4 Baseline design
 
@@ -476,11 +477,6 @@ Zhang, Z.-Q., Wu, Z.-M., Qian, B., & Hu, R. (2025). A reward-shaping dueling dis
 deep reinforcement learning framework for dynamic flexible job shop scheduling with random job
 arrivals. *Expert Systems with Applications*, 297, 128951.
 https://doi.org/10.1016/j.eswa.2025.128951
-
-Zhang, W., Kong, M., Zhang, Y., Fathollahi-Fard, A. M., & Tian, G. (2025). A revised deep
-reinforcement learning algorithm for parallel machine scheduling problem under multi-scenario due
-date constraints. *Swarm and Evolutionary Computation*, 92, 101808.
-https://doi.org/10.1016/j.swevo.2024.101808
 
 ---
 

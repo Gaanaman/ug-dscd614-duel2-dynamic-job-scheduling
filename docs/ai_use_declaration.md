@@ -30,7 +30,7 @@ numbers appear in `Submission_Links.txt`.
 | Baselines | Written with AI assistance | Run through the same harness and metric code as the agent; results cross-checked against expectation (Shortest-Job-First lowest waiting time, Round Robin lowest weighted tardiness). |
 | Evaluation harness and metrics | Written with AI assistance | Metrics verified against a three-job, two-machine schedule computed by hand in the test docstring. Held-out seed range asserted in code. |
 | Plotting and analysis | Written with AI assistance | Figures regenerate from committed logs only; the figure script cannot step the environment. |
-| Literature search | AI-assisted search for prior work on dueling DQN in job-shop scheduling and on action masking in value-based RL | **Every citation in `docs/report/references.md` must be opened and confirmed by a group member before submission.** Search results are a starting point, not a verified bibliography. |
+| Literature search | AI-assisted search for prior work on dueling DQN in job-shop scheduling and on action masking in value-based RL | Seven of the fourteen cited works are held in full text and every attributed claim was located in the body; the other seven are cited on a verified bibliographic record and on what their titles state. `docs/report/references.md` records the basis per entry. |
 | Report prose | Drafted with AI assistance from the group's own results and working notes | All numbers traced to `logs/`; no figure or number appears that is not in a committed log. |
 
 ## Verification statement
