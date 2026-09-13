@@ -3,9 +3,9 @@
 
 Each of the three faults in §6.3 is set out here with the measurement that found it and the test
 that now covers it. A fourth entry records the environment configuration that had to be replaced
-before any of the agent work was meaningful.
+before the agent experiments.
 
-\subsection{Training instances overlapped the held-out range}\label{training-instances-overlapped-the-held-out-range}
+\subsection{Instance overlap}\label{training-instances-overlapped-the-held-out-range}
 
 \texttt{training\_instance\_seed} used \texttt{1000\ +\ seed\ $\times$\ 100000} as a band start, which placed seeds 1 and 2 at
 101,000 and 201,000, both above the held-out range beginning at 9000, because the intended
@@ -14,7 +14,7 @@ wraparound never triggered. We now partition instances into disjoint bands of 30
 \texttt{tests/test\_env\_api.py} cover it: one asserts that no training instance enters
 the held-out range, the other that each seed draws its own instances.
 
-\subsection{The loss used an all-ones current-state mask}\label{the-loss-used-an-all-ones-current-state-mask}
+\subsection{Loss mask}\label{the-loss-used-an-all-ones-current-state-mask}
 
 \texttt{compute\_loss} passed \texttt{torch.ones\_like(next\_mask)} as the current-state mask. Because the dueling
 aggregation subtracts the mean advantage over legal actions, this optimised a different function
@@ -23,21 +23,20 @@ with waiting time rising from 7.30 to 17.28 over a 20,000-step run. The replay b
 the current mask, and a test in \texttt{tests/test\_mask.py} fails if the predicted
 \texttt{Q(s,a)} is computed with any mask other than the current one.
 
-\subsection{The environment had no headroom}\label{the-environment-had-no-headroom}
+\subsection{Load headroom}\label{the-environment-had-no-headroom}
 
 At \texttt{$\lambda$\ =\ 0.55} the makespan of 97.95 was within 8\% of the arrival-bound makespan of 90.9, and
 First-Come-First-Served and Shortest-Job-First differed by 0.06 in average waiting time. The load
 sweep and the resulting choice of \texttt{$\lambda$\ =\ 1.0} are in \texttt{docs/mdp\_spec.md} §10, and the check is retained
 as \texttt{scripts/check\_load.py}.
 
-\subsection{The no-op taught the agent to stall}\label{the-no-op-taught-the-agent-to-stall}
+\subsection{No-op stalling}\label{the-no-op-taught-the-agent-to-stall}
 
 The action space originally included a no-op. At 300,000 steps the resulting policy reached an
 average waiting time of 7.95, worse than selecting uniformly at random among legal actions (6.61),
 and chose the no-op at 46.3\% of decision epochs against 0.7\% for an untrained network.
 
-A policy losing to random is broken rather than undertrained, and that distinction decides whether
-the response is more compute or an investigation. Dispatching at an epoch that remains a decision
+A policy losing to random is broken rather than undertrained. Dispatching at an epoch that remains a decision
 epoch advances the clock by \texttt{$\Delta$t\ =\ 0} and returns reward 0, while every action that advances time
 returns a negative reward. Under discounting, an agent facing negative rewards improves its return
 by deferring them, and the no-op makes deferral available. Masking it dropped waiting time to 4.74.

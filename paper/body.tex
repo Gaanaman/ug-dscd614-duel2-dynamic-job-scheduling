@@ -2,24 +2,23 @@
 
 A manufacturing cell or a compute cluster faces the same question many times an hour: a machine has
 gone free, several jobs wait, and one must be chosen. The choice cannot be reversed, its cost is not
-visible until much later, and the set of waiting jobs changes as new work arrives. Unlike the
-classical job-shop problem, the full workload is never known in advance.
+visible until much later, and the set of waiting jobs changes as new work arrives. Unlike the classical job-shop problem, the full workload is not known in advance.
 
 Dispatching rules are the standard industrial answer, and the three the brief requires are
 First-Come-First-Served, Shortest-Job-First and Round Robin. Each applies one greedy criterion
 identically in every state, so none can trade a small loss now against a larger saving later,
 because none represents the later state.
 
-We ask whether reinforcement learning can learn that trade-off. We formulate dynamic scheduling on
-parallel non-identical machines as an MDP, train a Dueling DQN on it, and compare the result
-against all three rules under a protocol fixed before any result was seen. The aims are to specify
-the problem as an MDP with a fixed-dimension state, a masked discrete action space and a reward
-traceable to the evaluation metrics; to implement and train a Dueling DQN with action masking; to
-evaluate it on held-out instances with variation reported across seeds; and to explain the result.
+To test whether reinforcement learning can learn that trade-off, we formulate dynamic scheduling
+on parallel non-identical machines as an MDP, train a Dueling DQN on it, and compare the result
+against all three rules under a protocol fixed before any result was seen. The problem is specified as an MDP
+with a fixed-dimension state, a masked discrete action space and a reward traceable to the
+evaluation metrics. A Dueling DQN with action masking is trained on it and evaluated on held-out
+instances with variation reported across seeds, and the result is explained.
 
 \section{Background}\label{background}
 
-\subsection{Value-based deep reinforcement learning}\label{value-based-deep-reinforcement-learning}
+\subsection{Value-based methods}\label{value-based-deep-reinforcement-learning}
 
 Deep Q-Networks \citep{mnih2015} fit \texttt{Q(s,\ a)} to \texttt{y\ =\ r\ +\ $\gamma$$\cdot$max\_\{a\textquotesingle{}\}\ Q\_target(s\textquotesingle{},\ a\textquotesingle{})}, using a
 replay buffer to decorrelate samples and a target network to stabilise the regression. The dueling
@@ -34,7 +33,7 @@ Q(s,a) = V(s) + \Bigl( A(s,a) - \tfrac{1}{|\mathcal{A}|}\textstyle\sum_{a'} A(s,
 Subtracting the mean resolves identifiability, since \texttt{V} and \texttt{A} are otherwise determined only up to
 a constant. The ordering of actions is preserved, so the greedy policy is unchanged.
 
-\subsection{Why dueling suits scheduling specifically}\label{why-dueling-suits-scheduling-specifically}
+\subsection{Dueling and scheduling}\label{why-dueling-suits-scheduling-specifically}
 
 Dueling is motivated by states in which the choice of action barely matters, so that estimating a
 separate \texttt{Q} per action wastes capacity re-deriving a shared state value. Scheduling has that
@@ -43,7 +42,7 @@ state. The advantage of one assignment over another is often small and sometimes
 idle machines of equal speed and two identical jobs make several actions interchangeable. Measurements on the trained network are consistent with this. The Q-spread across legal actions averaged 0.11 against episode
 returns near -2, two orders of magnitude smaller than the between-state signal.
 
-\subsection{Prior work in the domain}\label{prior-work-in-the-domain}
+\subsection{Prior work}\label{prior-work-in-the-domain}
 
 The closest published precedent is \citet{hanyang2020}, and three of our design decisions follow
 from it. Working on adaptive job-shop scheduling, they encode ``manufacturing states as
@@ -54,19 +53,18 @@ scale problems''. Their action space is therefore dispatching-rule selection rat
 than direct operation assignment, and their state representation is structured over jobs rather
 than flat. Their benchmark is any single heuristic rule.
 
-Their finding on structured state is corroborated elsewhere. \citet{zhang2020l2d} embed the
-disjunctive graph with a GNN to obtain a size-agnostic policy, and \citet{smit2024gnn} survey the
+\citet{zhang2020l2d} likewise use a structured state, embedding the disjunctive graph with a GNN
+to obtain a size-agnostic policy, and \citet{smit2024gnn} survey the
 GNN literature for scheduling. Two further studies apply reward shaping to dynamic flexible
 job-shop scheduling with random arrivals, the setting here (Zhang et al., 2024; Zhang et al.,
 2025). \citet{lv2025review} survey the wider field.
 
-This project departs from that literature in one respect. The standard there is D3QN, but the
-brief specifies Dueling DQN, so the headline configuration uses dueling alone and exposes
+The standard in that literature is D3QN, but the brief specifies Dueling DQN, so the headline configuration uses dueling alone and exposes
 \texttt{double\_q} as a flag.
 
 \section{Problem formulation}\label{problem-formulation}
 
-\subsection{The scheduling problem}\label{the-scheduling-problem}
+\subsection{Scheduling problem}\label{the-scheduling-problem}
 
 The system has \texttt{M} non-preemptive parallel machines, where machine \texttt{m} has speed \texttt{s\_m}, so job \texttt{j}
 occupies \texttt{p\_j/s\_m} time units. Jobs arrive as a Poisson process with rate \texttt{$\lambda$}, and an episode
@@ -103,18 +101,17 @@ advances the clock.
 
 A mask \texttt{$\mu$\ $\in$\ \{0,1\}\^{}51} accompanies every observation, with \texttt{$\mu${[}kM\ +\ m{]}\ =\ 1} iff slot \texttt{k} is occupied
 and machine \texttt{m} is idle. Because a decision epoch requires both an idle machine and a pending job,
-at least one assignment is always legal and the mask is never empty.
+at least one assignment is legal and the mask is non-empty.
 
-The mask is applied in five places. $\epsilon$-greedy exploration samples only
-legal actions, and greedy selection argmaxes with illegal entries at a large negative value. The
+The mask is applied at five points: $\epsilon$-greedy exploration samples only legal actions, and greedy selection argmaxes with illegal entries at a large negative value. The
 bootstrap target restricts \texttt{max\_\{a\textquotesingle{}\}\ Q\_target(s\textquotesingle{},a\textquotesingle{})} to actions legal in \texttt{s\textquotesingle{}}, which requires the
 next-state mask in the buffer. The dueling mean is taken over legal actions only, since otherwise
 values from unreachable outputs leak into \texttt{V(s)}. Finally, the current-state mask must be supplied
 during the update, or \texttt{Q(s,a)} in the loss differs from what the behaviour policy evaluates, as
 Appendix A.2 reports.
 
-Two formulations are implemented and both reported. Formulation A is the direct assignment just
-described. Formulation B, the headline, is dispatching-rule selection: \texttt{Discrete(8)} over SPT, LPT,
+Formulation A is the direct assignment just described, and Formulation B, the headline, is
+dispatching-rule selection: \texttt{Discrete(8)} over SPT, LPT,
 EDD, FCFS, WSPT, minimum slack, critical ratio and apparent tardiness cost. The rule selects the
 job and the machine is the fastest idle one, so the action isolates job selection.
 
@@ -146,7 +143,7 @@ report as \texttt{avg\_waiting\_time\ $\times$\ N}. The term is the evaluation o
 epochs, so the per-step signal and the evaluation metric agree.
 \texttt{tests/test\_reward.py} asserts the identity numerically on a full episode.
 
-\subsection{Termination, truncation and discount}\label{termination-truncation-and-discount}
+\subsection{Termination and discount}\label{termination-truncation-and-discount}
 
 Termination occurs when all \texttt{N} jobs complete, an absorbing state; truncation occurs at
 \texttt{T\_max\ =\ 4N\ =\ 200} epochs or when time exceeds \texttt{H}. Truncation is a harness limit rather than a
@@ -181,8 +178,7 @@ instance seeds occupy disjoint bands of 3000 below 9000, and evaluation uses 900
 guarded by an assertion and two tests. \texttt{check\_env} passes, run in permissive action mode because the
 checker cannot respect a mask; training and evaluation run strict.
 
-The environment constants were set from a load sweep. At \texttt{$\lambda$\ =\ 0.55} the makespan
-was 97.95 against an arrival bound \texttt{N/$\lambda$} of 90.9, so the arrival process rather than the scheduler
+A load sweep set the arrival rate: at \texttt{$\lambda$\ =\ 0.55} the makespan was 97.95 against an arrival bound \texttt{N/$\lambda$} of 90.9, so the arrival process rather than the scheduler
 set the finish time and the rules were indistinguishable. Sweeping \texttt{$\lambda$} gave 1.0 (\texttt{$\rho$\ =\ 1.24}), where
 the makespan is 69.06 against a bound of 50.0. Appendix A.3 gives the sweep, and
 \texttt{scripts/check\_load.py} retains the check.
@@ -203,10 +199,9 @@ learning starts at 10,000, one gradient step per 4 environment steps, target syn
 gradient clipped at 10, and Huber loss. $\epsilon$ decays 1.0 $\rightarrow$ 0.05 over the first 30\% of training, and each
 seed runs one million steps. The buffer stores both masks, for the reasons in §3.4.
 
-Two enhancements are evaluated by ablation. Prioritised
-experience replay \citep{schaul2016per} samples in proportion to the last temporal-difference error
-with importance-sampling weights annealed to 1, following \citet{hanyang2020} and \citet{liu2025ddqnper}; it alters which transitions are drawn, not the learning rule. n-step returns propagate a
-delayed consequence to the causing action in one update rather than n \citep{hessel2018rainbow}, which
+Prioritised experience replay \citep{schaul2016per}, the first of two enhancements evaluated by
+ablation, samples in proportion to the last temporal-difference error
+with importance-sampling weights annealed to 1, following \citet{hanyang2020} and \citet{liu2025ddqnper}; it alters which transitions are drawn, not the learning rule. n-step returns, the second, propagate a delayed consequence to the causing action in one update rather than n \citep{hessel2018rainbow}, which
 matters here because a dispatch returns reward 0 at the moment it is committed. The buffer stores
 the discount actually applied, so a window flushed at an episode boundary uses \texttt{$\gamma$\^{}k} for the \texttt{k}
 rewards accumulated. \texttt{double\_q} \citep{vanhasselt2016} is off throughout, so the algorithm we
@@ -216,23 +211,22 @@ report is Dueling DQN as the brief requires.
 
 The group implemented the three required rules, First-Come-First-Served, Shortest-Job-First and
 Round Robin, behind a common \texttt{Policy} interface. Each chooses a job and then the fastest idle
-machine, so the comparison isolates job selection, and every rule sees the same ten-slot window as
-the agent. A baseline with full queue visibility would not face the agent's constraints.
+machine, so the comparison isolates job selection, and every rule receives the same ten-slot window as the agent. A baseline with full queue visibility would not face the agent's constraints.
 
 \texttt{RandomMasked} is a diagnostic floor rather than a required baseline: a policy that cannot beat
 uniform selection among legal actions is broken rather than undertrained. It is reported because it changed
 design decisions during development.
 
-The rules also set a second, harder comparison. Under Formulation B the eight rules are themselves
-policies, and two of them beat all three required baselines. Any rule in the action set is
-reachable by a policy that always selects it, so beating Shortest-Job-First is not by itself
-evidence of learning. We therefore report against the best single rule, the benchmark Han and Yang
+Under Formulation B the eight rules are themselves policies, and two of them beat all three
+required baselines, which sets a second, harder comparison. Any rule in the action set is
+reachable by a policy that always selects it, so beating Shortest-Job-First alone would not distinguish learning from constant
+selection of one rule. We therefore report against the best single rule, the benchmark Han and Yang
 use.
 
 \subsection{Experimental protocol}\label{experimental-protocol}
 
-We wrote the protocol into \texttt{docs/experimental\_protocol.md} before any result existed. It fixes three
-training seeds (0, 1, 2) with hyperparameters held identical, and evaluation on 30 held-out
+The protocol, written into \texttt{docs/experimental\_protocol.md} before any result existed, fixes
+three training seeds (0, 1, 2) with hyperparameters held identical, and evaluation on 30 held-out
 instances, seeds 9000--9029, identical for every policy and every agent seed, which makes the
 comparison paired. Exploration is disabled at evaluation. The aggregation code has no option to
 select a seed, so every reported number is a mean over the three, and differences are compared
@@ -248,19 +242,19 @@ same instances through the same metric code.
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.72\textwidth]{figures/training_curve.png}
-\caption{Episode return against environment steps, meaned across three seeds with a band at one
-standard deviation. Return improves from $-1.79$ to $-1.51$ and is flat from roughly step
-400{,}000 onward.}
+\caption{Episode return against environment steps, averaged across three seeds with a band at one
+standard deviation.}
 \label{fig:training}
 \end{figure*}
 
 \subsection{Training}\label{training}
 
+Figure~\ref{fig:training} plots episode return against environment steps, averaged across seeds.
 Return rises from -1.79 at 100,000 steps to -1.52 at 400,000 and is flat thereafter, so the budget
 sufficed, and the seed spread stays at or below 0.041. Training returns include $\epsilon$ = 0.05 and are
 not comparable to evaluation numbers.
 
-\subsection{The dispatching rules}\label{the-dispatching-rules-and-the-bar-they-set}
+\subsection{Dispatching rules}\label{the-dispatching-rules-and-the-bar-they-set}
 
 {\def\LTcaptype{none} % do not increment counter
 \begin{table*}[t]
@@ -279,13 +273,14 @@ FCFS & 5.539 & 0.465 & 212.3 & $-2.099$ \\
 LPT  & 7.744 & 0.421 & 437.9 & $-3.958$ \\
 \bottomrule
 \end{tabular}
-\caption{The eight dispatching rules on the thirty held-out instances. ATC sets the bar.}
+\caption{The eight dispatching rules on the thirty held-out instances.}
 \label{tab:rules}
 \end{table*}
 
 }
 
-Two rules inside the action set beat all three required baselines. ATC at -1.125 is the reference,
+Table~\ref{tab:rules} lists the eight rules on the held-out instances, ordered by return; two
+rules inside the action set beat all three required baselines. ATC at -1.125 is the reference,
 since a Formulation B policy that always selects it reaches that score.
 
 
@@ -293,8 +288,8 @@ since a Formulation B policy that always selects it reaches that score.
 \centering
 \includegraphics[width=0.72\textwidth]{figures/ablation.png}
 \caption{Agent variants against the best single dispatching rule. The dashed line is ATC at
-$-1.125$. Every variant on the rule action space outperforms all three required baselines; none
-reaches the bar.}
+$-1.125$. Every variant on the rule action space outperforms all three required baselines; none reaches
+ATC.}
 \label{fig:ablation}
 \end{figure*}
 
@@ -320,7 +315,9 @@ B $+$ PER $+$ n-step 3           & $-1.315$, $-1.282$, $-1.263$ & $-1.287$ & 0.0
 
 }
 
-We compare differences against the combined seed spread, with per-seed dominance checked.
+Table~\ref{tab:ablation} gives per-seed and mean return for each variant, and
+Figure~\ref{fig:ablation} plots the means against ATC. We compare differences against the
+combined seed spread, with per-seed dominance checked.
 
 \begin{itemize}
 \item
@@ -343,11 +340,11 @@ average waiting time (4.077 against 4.525) and fewer missed deadlines (0.256 aga
 return the agent improves on First-Come-First-Served by 0.864, on Shortest-Job-First by 0.117 and
 on Round Robin by 0.164, all beyond the seed spread.
 
-Against ATC the agent falls short. ATC scores -1.125 against the agent's -1.235, a difference of
-0.109 that exceeds the seed spread. Section 6.4 discusses the cause.
+ATC scores -1.125 against the agent's -1.235, a difference of 0.109 that exceeds the seed
+spread; §6.4 discusses the cause.
 
-Machine utilisation (0.884--0.927) and makespan vary by under 5\% across all thirteen policies. Both
-are dominated by the arrival process, and are reported for completeness.
+Figure~\ref{fig:bars} shows every policy on the four metrics. Machine utilisation (0.884--0.927)
+and makespan vary by under 5\% across all thirteen policies; both are dominated by the arrival process, and are reported for completeness.
 
 
 \begin{figure*}[t]
@@ -360,18 +357,17 @@ makespan barely separate the policies at this load.}
 
 \section{Discussion}\label{discussion}
 
-\subsection{Effect of the action space}\label{the-action-space-was-the-binding-constraint}
+\subsection{Action space}\label{the-action-space-was-the-binding-constraint}
 
 Formulation B improves on A by 0.245 in return, an order of magnitude larger than any other change
 tested. Under A the agent outperformed only First-Come-First-Served, whereas under B every variant
 outperforms all three required baselines.
 
-The mechanism lies in the state encoding. SPT implements a comparison across queued jobs.
-Under A the network must learn that from a flat 69-dimensional vector in which each slot occupies a
-fixed, arbitrary offset. Under B the rule performs the comparison and the network learns only
-\emph{when} each rule applies. The measured Q-spread of 0.11 across legal actions, against episode
-returns near -2, supports this: the network learned state value well and between-action
-ordering poorly.
+The mechanism lies in the state encoding: SPT implements a comparison across queued jobs, which
+under A the network must learn from a flat 69-dimensional vector in which each slot occupies a
+fixed, arbitrary offset. Under B the rule performs the comparison and the network need only represent \emph{when}
+each rule applies. The measured Q-spread of 0.11 across legal actions, against episode
+returns near -2, supports this: state value was estimated well and between-action ordering poorly.
 
 \subsection{Prioritised replay}\label{prioritised-replay-did-not-help-contrary-to-our-own-prediction}
 
@@ -388,24 +384,24 @@ The mechanism fits the diagnosis in §6.1. Reward is 0 when a dispatch is commit
 appears tens of decisions later, and n-step propagates that consequence to the causing action.
 Prioritised replay changes which transitions are replayed, not how far credit is propagated.
 
-\subsection{Faults found during development}\label{three-faults-found-by-measuring-rather-than-assuming}
+\subsection{Development faults}\label{three-faults-found-by-measuring-rather-than-assuming}
 
-Three problems appeared during development, none of which raised an error. The action
-space originally included a no-op, and the policy chose it at 46.3\% of decision epochs, scoring
+The action space originally included a no-op, and the no-op was selected at 46.3\% of decision
+epochs, scoring
 worse than a uniform-random legal policy. Training instance seeds for two of three seeds fell
-inside the held-out evaluation range, which would have inflated every headline number. The loss
+inside the held-out evaluation range, which would have inflated the headline numbers. The loss
 supplied an all-ones current-state mask, so \texttt{Q(s,a)} during the update differed from what the
-behaviour policy evaluated, and the agent degraded as it trained. Each was found by a diagnostic check run
-before the result was accepted. Appendix A gives the forensics and the tests.
+behaviour policy evaluated, and performance degraded with training. None of the three raised an
+error; each was found by a diagnostic check run before the result was accepted, and Appendix A
+gives the forensics and the tests.
 
-\subsection{Why the agent stops short of the best single rule}\label{why-the-agent-stops-short-of-the-best-single-rule}
+\subsection{ATC gap}\label{why-the-agent-stops-short-of-the-best-single-rule}
 
-Two explanations can be excluded. Return plateaus from 400,000 steps with a seed spread under
-0.05, so more compute does not close the gap. The reward ranking and the metric
-ranking agree and ATC tops both, so a better score on this reward is a better schedule.
+Return plateaus from 400,000 steps with a seed spread under 0.05, so more compute does not close
+the gap, and the reward ranking and the metric ranking agree, with ATC top of both, so a better score on this reward is a better schedule.
 
-The state representation is the remaining constraint. Under Formulation B the network decides
-\emph{which rule suits the current queue} while seeing that queue as a flat concatenation of ten slots.
+The remaining constraint is the state representation: under Formulation B the network selects a
+rule for the current queue from a flat concatenation of ten slots.
 Prior work addresses this with a structured encoder, either a graph network over the disjunctive
 representation or attention over the queue, which makes cross-job comparison native. That is the
 leading item in further work.
@@ -419,7 +415,7 @@ sampling would spend the budget on actions the environment rejects. We conducted
 search, so the schedule is the standard DQN default. The evidence that it sufficed is the return curve in
 §5.1, flat over the last 600,000 steps at $\epsilon$ = 0.05.
 
-\section{Limitations and deployment considerations}\label{limitations-and-deployment-considerations}
+\section{Limitations and deployment}\label{limitations-and-deployment-considerations}
 
 The state is only partially observed: just the ten most urgent queued jobs are visible, and the
 arrival times of unreleased jobs are absent. A recurrent encoder, or stacking a short observation
@@ -436,12 +432,11 @@ non-stationary arrivals. Transfer to those settings was not tested, and the load
 chosen partly to make the comparison informative. Three seeds is a small sample, so differences are compared
 against the seed spread and no significance test is supported.
 
-Three properties are relevant to deployment. Inference is one forward
-pass through a small network, fast enough for a dispatch loop. The mask is enforced by the
+For deployment, inference is one forward pass through a small network, fast enough for a dispatch loop. The mask is enforced by the
 environment, so an out-of-distribution observation cannot produce an illegal schedule, and the
 failure mode is a poor legal choice rather than an invalid one. Under Formulation B every action is
-a named dispatching rule, so an operator can audit any decision. However, the policy inherits its
-training arrival distribution, so a shift in load requires retraining.
+a named dispatching rule, so an operator can audit each decision. However, the policy is specific to its training arrival
+distribution, so a shift in load requires retraining.
 
 \section{Conclusion and further work}\label{conclusion-and-further-work}
 
@@ -449,7 +444,7 @@ We formulated dynamic job scheduling on heterogeneous parallel machines as a mas
 trained a Dueling DQN on it under two action formulations. The comparison ran on held-out instances
 under a protocol fixed in advance, against three required dispatching rules and the best of eight.
 The rule formulation with three-step returns beats all three required baselines in return on
-every seed, and falls short of the strongest rule in its own action set by 0.109.
+every seed, and scores 0.109 below the strongest rule in its own action set.
 
 Three problems found during development raised no error: an instance-seed overlap with the
 held-out set, a mask omitted from the loss, and a reward structure that rewarded stalling. Each was
@@ -457,7 +452,7 @@ found by a diagnostic check, a uniform-random legal policy or a load-separation 
 
 Further work, in order of expected value: replace the fixed ten-slot window with a
 permutation-invariant encoder over the queue; retain the no-op under potential-based shaping;
-evaluate \texttt{double\_q} as the D3QN combination the literature favours; and test transfer across
+evaluate \texttt{double\_q} as the D3QN combination standard in the literature; and test transfer across
 untrained arrival rates.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
