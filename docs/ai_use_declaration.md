@@ -1,6 +1,6 @@
 # Declaration of Generative Artificial Intelligence Use
 
-Group 11 (Kyeremeh Faithful, Daniel K. Adotey, Caleb Abakah Mensah), Option DUEL-2, DSCD 614
+Group 11 (Daniel K. Adotey, Kyeremeh Faithful, Caleb Abakah Mensah), Option DUEL-2, DSCD 614
 Reinforcement Learning, University of Ghana.
 
 ## Scope of the work
@@ -32,5 +32,5 @@ Generative AI was used as set out here and nowhere else. The submitted work is t
 The group accepts responsibility for the correctness of everything in it, including anything a
 tool contributed.
 
-Kyeremeh Faithful · Daniel K. Adotey · Caleb Abakah Mensah
+Daniel K. Adotey · Kyeremeh Faithful · Caleb Abakah Mensah
 13 September 2026
