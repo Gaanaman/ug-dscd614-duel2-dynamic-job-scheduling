@@ -1,16 +1,19 @@
-"""Render docs/report/report.md into the two-column LaTeX paper.
+"""Build the two-column LaTeX paper.
 
-    python3 scripts/build_paper.py
+    python3 scripts/build_paper.py                  # run the LaTeX toolchain on paper/*.tex
+    python3 scripts/build_paper.py --from-markdown  # first regenerate body.tex and appendix.tex
 
-Markdown is the single source. This script converts it, rewrites the narrative
-citations into apacite commands, substitutes the tables and figures, normalises
-the characters pdflatex cannot set, and runs the LaTeX toolchain.
+paper/body.tex and paper/appendix.tex are the source of the submitted report and are
+edited directly. docs/report/report.md is a reading copy exported from them. The
+--from-markdown path converts the markdown into LaTeX (citations, tables, figures,
+glyphs) and is kept for a full rewrite that starts from the markdown.
 """
 from __future__ import annotations
 
 import pathlib
 import re
 import subprocess
+import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "docs/report/report.md"
@@ -160,7 +163,7 @@ def render_appendix(md: str) -> str:
     return "\\appendix\n" + substitute_glyphs(tex).strip() + "\n"
 
 
-def main() -> None:
+def render_from_markdown() -> None:
     md = SRC.read_text()
     body = md.split("## 9. References")[0]     # bibtex renders the list
     body = re.sub(r"^# .*?\n", "", body, count=1)
@@ -194,6 +197,10 @@ def main() -> None:
     (OUT / "body.tex").write_text(tex.strip() + "\n")
     (OUT / "appendix.tex").write_text(render_appendix(md))
 
+
+def main() -> None:
+    if "--from-markdown" in sys.argv[1:]:
+        render_from_markdown()
     for _ in range(2):
         subprocess.run(["pdflatex", "-interaction=nonstopmode", "main"],
                        cwd=OUT, capture_output=True)

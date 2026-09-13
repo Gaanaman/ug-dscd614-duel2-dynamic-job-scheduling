@@ -34,6 +34,7 @@ build() {
 }
 # The report is the two-column CVPR build, which carries the appendix and the figures.
 # Building it with pandoc here would drop both, and the cross-references with them.
+# paper/*.tex is the source; build_paper.py only runs the LaTeX toolchain.
 python3 scripts/build_paper.py
 cp paper/main.pdf submission/Project_Report.pdf
 echo "  Project_Report.pdf"
