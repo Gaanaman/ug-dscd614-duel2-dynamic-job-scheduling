@@ -37,13 +37,13 @@ job scheduling on five heterogeneous parallel machines with Poisson arrivals as 
 Markov decision process and train a Dueling Deep Q-Network on it under two action formulations:
 direct assignment of a queued job to a machine, and selection among eight dispatching rules. On
 thirty held-out instances across three seeds, the rule formulation with three-step returns reaches
-a return of $-1.235 \pm 0.025$, beating First-Come-First-Served, Shortest-Job-First and Round Robin
-on every metric by margins exceeding the seed spread. It does not beat the strongest rule in its own
-action set, Apparent Tardiness Cost at $-1.125$. An ablation shows three-step returns contribute a
-real improvement while prioritised experience replay contributes nothing measurable, which runs
-against the recipe of the closest published precedent. We report the shortfall, locate it in the
-flat state encoding rather than in compute or reward design, and give the measurements that rule
-out the alternatives.
+a return of $-1.235 \pm 0.025$, beating First-Come-First-Served and Round Robin on every metric, and Shortest-Job-First on
+return, weighted tardiness and makespan, by margins exceeding the seed spread; Shortest-Job-First
+retains the lower average waiting time and fewer missed deadlines. It does not beat the strongest rule in its own
+action set, Apparent Tardiness Cost at $-1.125$. An ablation shows that three-step returns improve the
+return while prioritised experience replay gives no measurable improvement, contrary to the closest
+published precedent. The shortfall is attributed to the flat state encoding rather than to compute
+or reward design.
 \end{abstract}
 
 \input{body}

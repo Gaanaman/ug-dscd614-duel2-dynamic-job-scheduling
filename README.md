@@ -12,7 +12,7 @@ Coursework project for DSCD 614 (Reinforcement Learning), University of Ghana.
 | Environment | `DynamicJobShop-v0` — custom Gymnasium environment, synthetic job stream |
 | Action space | Eight dispatching rules (headline); direct job/machine assignment (ablation) |
 | Baselines | FCFS, SJF, Round Robin (required); all eight rules; uniform-random floor |
-| Headline result | Beats all three required baselines on every metric and seed; **below the best single rule (ATC) by 0.109** |
+| Headline result | Beats FCFS and Round Robin on every metric and seed, and SJF on return, tardiness and makespan; **below the best single rule (ATC) by 0.109** |
 | Metrics | makespan · average waiting time · machine utilisation · missed deadlines · cumulative reward |
 | Protocol | 3 training seeds, 30 held-out evaluation episodes per seed |
 
