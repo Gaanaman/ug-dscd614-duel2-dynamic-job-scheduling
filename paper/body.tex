@@ -259,6 +259,8 @@ not comparable to evaluation numbers.
 {\def\LTcaptype{none} % do not increment counter
 \begin{table*}[t]
 \centering\small
+\caption{The eight dispatching rules on the thirty held-out instances.}
+\label{tab:rules}
 \begin{tabular}{lrrrr}
 \toprule
 Rule & Avg.\ waiting & Missed & Weighted tardiness & Return \\
@@ -273,8 +275,6 @@ FCFS & 5.539 & 0.465 & 212.3 & $-2.099$ \\
 LPT  & 7.744 & 0.421 & 437.9 & $-3.958$ \\
 \bottomrule
 \end{tabular}
-\caption{The eight dispatching rules on the thirty held-out instances.}
-\label{tab:rules}
 \end{table*}
 
 }
@@ -298,6 +298,8 @@ ATC.}
 {\def\LTcaptype{none} % do not increment counter
 \begin{table*}[t]
 \centering\small
+\caption{Ablation across three seeds at one million steps per seed.}
+\label{tab:ablation}
 \begin{tabular}{lcccc}
 \toprule
 Variant & Per-seed return & Mean & s.d. & Gap to ATC \\
@@ -309,8 +311,6 @@ B $+$ n-step 3                   & $-1.222$, $-1.212$, $-1.269$ & $-1.235$ & 0.0
 B $+$ PER $+$ n-step 3           & $-1.315$, $-1.282$, $-1.263$ & $-1.287$ & 0.021 & $-0.161$ \\
 \bottomrule
 \end{tabular}
-\caption{Ablation across three seeds at one million steps per seed.}
-\label{tab:ablation}
 \end{table*}
 
 }
