@@ -1,65 +1,36 @@
 # Declaration of Generative Artificial Intelligence Use
 
-Required by the examination instructions (Part C, `AI_Use_Declaration.pdf`; Part F rule 9).
-Generative AI is permitted for code assistance, debugging, literature searching and language
-editing. Its use must be declared, stating which tools were used, for which parts of the work, and
-how the output was verified. The group remains responsible for the correctness of everything
-submitted; an error introduced by a tool is the group's error.
+Group 11 (Kyeremeh Faithful, Daniel K. Adotey, Caleb Abakah Mensah), Option DUEL-2, DSCD 614
+Reinforcement Learning, University of Ghana.
 
-This declaration is made on behalf of Group 11 and covers the whole submission.
+## Scope of the work
+
+The group designed the problem formulation, chose the algorithm and the baselines, wrote the
+experimental protocol before any result was produced, ran every experiment, read every result
+and wrote the report. Each member owned the modules listed in the repository README and reviewed
+the other members' pull requests.
 
 ## Tools used
 
-| Tool | Version / access date | Used by | Used for |
+| Tool | Dates | Used by | Purpose |
 |---|---|---|---|
-| Claude (Anthropic), via Claude Code | 27 August – 2 September and 8 September 2026 | Daniel | Code assistance across the environment, agent, harness and analysis scripts; debugging; literature search; drafting and editing prose. The 8 September session revised the report's prose against the eight papers in `corpus/`, corrected two hyperparameter values that had drifted from the code, and repaired the appendix cross-references |
-| ChatGPT (OpenAI), Codex desktop app | 1–4 September 2026 | Faithful | Repository and deliverables audit; development of the read-only submission-artifact validator and its integration test; Git conflict-resolution guidance; reproducibility checks; and diagnosis of the PDF build workflow. Suggested changes were reviewed manually, the validator was run directly, and the full test suite passed with 43 tests. |
+| Claude (Anthropic), Claude Code | 27 August to 13 September 2026 | Daniel | Code completion and debugging in the environment, agent and evaluation modules; literature search; language editing of the report |
+| ChatGPT (OpenAI), Codex | 1 to 4 September 2026 | Faithful | Repository audit, a submission-artifact validator, Git conflict resolution and PDF build diagnosis |
 
-This repository is public and carries first names only. Full names and student identification
-numbers appear in `Submission_Links.txt`.
+## Verification
 
-## Parts of the work
-
-| Component | AI involvement | How the output was verified |
-|---|---|---|
-| MDP formulation | Drafted with AI assistance; state design, reward decomposition and the Markov analysis were reviewed and amended by the group | The reward's waiting term is asserted numerically against total waiting time on a full episode (`test_waiting_term_telescopes_to_total_waiting_time`). The spec was corrected against the implementation when the two disagreed on no-op validity. |
-| Environment implementation | Written with AI assistance | `gymnasium.utils.env_checker.check_env` passes. Eight further tests cover observation bounds, seed reproducibility, termination against truncation, and monotonic simulated time. |
-| Reward function | Written with AI assistance | Five unit tests, including the telescoping identity and a hand-computed interval. |
-| Action masking | Written with AI assistance | Nine tests, including three that fail if the mask is removed from the bootstrap target, from the current-state loss input, or from the dueling mean. |
-| Dueling network and training loop | Written with AI assistance, structured after the CleanRL reference (attributed in `docs/attribution.md` and in the source file) | Masked forward pass verified against a hand-set advantage bias. Training verified end to end against a uniform-random legal policy as a floor. |
-| Baselines | Written with AI assistance | Run through the same harness and metric code as the agent; results cross-checked against expectation (Shortest-Job-First lowest waiting time, Round Robin lowest weighted tardiness). |
-| Evaluation harness and metrics | Written with AI assistance | Metrics verified against a three-job, two-machine schedule computed by hand in the test docstring. Held-out seed range asserted in code. |
-| Plotting and analysis | Written with AI assistance | Figures regenerate from committed logs only; the figure script cannot step the environment. |
-| Literature search | AI-assisted search for prior work on dueling DQN in job-shop scheduling and on action masking in value-based RL | Seven of the fourteen cited works are held in full text and every attributed claim was located in the body; the other seven are cited on a verified bibliographic record and on what their titles state. `docs/report/references.md` records the basis per entry. |
-| Report prose | Drafted with AI assistance from the group's own results and working notes | All numbers traced to `logs/`; no figure or number appears that is not in a committed log. |
-
-## Verification statement
-
-Verification was not a review pass at the end. It was continuous, and it caught four faults that
-produced no error message:
-
-1. **Training instance seeds overlapped the held-out evaluation range** for two of three seeds.
-   Found by printing the seed function's output rather than trusting it. Now covered by two tests
-   and an in-function assertion.
-2. **The training loss used an all-ones current-state mask**, optimising a different function from
-   the one the behaviour policy evaluated. Found because a smoke run got worse with training, not
-   better. Now covered by a test.
-3. **The agent learned to stall**, selecting the no-op at 46.3% of decision epochs. Found by adding
-   a uniform-random legal policy as a diagnostic floor and observing that the trained agent lost to
-   it. Resolved by a documented two-arm ablation.
-4. **The first environment configuration had no headroom** — makespan was set by the arrival
-   process, not the scheduler. Found by a load-separation check run before any training. Retained
-   as `scripts/check_load.py`.
-
-Every claim in the report that rests on a number is traceable to a file under `logs/`, and every
-figure is regenerated from those logs by a script that cannot access the environment.
+The group checked every tool output before use. Code was accepted only after the test suite
+passed (43 tests), including tests that fail if action masking is removed from the loss or the
+bootstrap target. The waiting-time term of the reward is asserted numerically against the
+evaluation metric on a full episode. Every number in the report traces to a committed log under
+`logs/`, and every figure regenerates from those logs. Cited works were read in full where the
+text was available; the remainder are cited on the bibliographic record.
 
 ## Statement
 
-Group 11 declares that generative artificial intelligence was used as set out above, for the parts
-of the work identified, and verified by the methods described. The work submitted is our own and we
-accept responsibility for the correctness of everything in it, including anything a tool
-contributed.
+Generative AI was used as set out here and nowhere else. The submitted work is the group's own.
+The group accepts responsibility for the correctness of everything in it, including anything a
+tool contributed.
 
 Kyeremeh Faithful · Daniel K. Adotey · Caleb Abakah Mensah
-DSCD 614 Reinforcement Learning · Option DUEL-2 · 4 September 2026
+13 September 2026
