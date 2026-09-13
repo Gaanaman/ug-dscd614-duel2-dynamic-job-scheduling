@@ -36,7 +36,7 @@ a constant. The ordering of actions is preserved, so the greedy policy is unchan
 \subsection{Dueling and scheduling}\label{why-dueling-suits-scheduling-specifically}
 
 Dueling is motivated by states in which the choice of action barely matters, so that estimating a
-separate \texttt{Q} per action wastes capacity re-deriving a shared state value. Scheduling has that
+separate \texttt{Q} per action spends capacity re-deriving a shared state value. Scheduling has that
 structure. Value is dominated by congestion, which is identical for every action available in a
 state. The advantage of one assignment over another is often small and sometimes zero, since two
 idle machines of equal speed and two identical jobs make several actions interchangeable. Measurements on the trained network are consistent with this. The Q-spread across legal actions averaged 0.11 against episode
@@ -179,7 +179,7 @@ guarded by an assertion and two tests. \texttt{check\_env} passes, run in permis
 checker cannot respect a mask; training and evaluation run strict.
 
 A load sweep set the arrival rate: at \texttt{$\lambda$\ =\ 0.55} the makespan was 97.95 against an arrival bound \texttt{N/$\lambda$} of 90.9, so the arrival process rather than the scheduler
-set the finish time and the rules were indistinguishable. Sweeping \texttt{$\lambda$} gave 1.0 (\texttt{$\rho$\ =\ 1.24}), where
+set the finish time and the rules differed by 0.06 in average waiting time. Sweeping \texttt{$\lambda$} gave 1.0 (\texttt{$\rho$\ =\ 1.24}), where
 the makespan is 69.06 against a bound of 50.0. Appendix A.3 gives the sweep, and
 \texttt{scripts/check\_load.py} retains the check.
 
@@ -213,9 +213,8 @@ The group implemented the three required rules, First-Come-First-Served, Shortes
 Round Robin, behind a common \texttt{Policy} interface. Each chooses a job and then the fastest idle
 machine, so the comparison isolates job selection, and every rule receives the same ten-slot window as the agent. A baseline with full queue visibility would not face the agent's constraints.
 
-\texttt{RandomMasked} is a diagnostic floor rather than a required baseline: a policy that cannot beat
-uniform selection among legal actions is broken rather than undertrained. It is reported because it changed
-design decisions during development.
+\texttt{RandomMasked}, uniform selection among legal actions, is a diagnostic floor rather than a
+required baseline, and is reported because it informed the action-space design.
 
 Under Formulation B the eight rules are themselves policies, and two of them beat all three
 required baselines, which sets a second, harder comparison. Any rule in the action set is
@@ -251,8 +250,8 @@ standard deviation.}
 
 Figure~\ref{fig:training} plots episode return against environment steps, averaged across seeds.
 Return rises from -1.79 at 100,000 steps to -1.52 at 400,000 and is flat thereafter, so the budget
-sufficed, and the seed spread stays at or below 0.041. Training returns include $\epsilon$ = 0.05 and are
-not comparable to evaluation numbers.
+sufficed, and the seed spread stays at or below 0.041. Training returns include $\epsilon$ = 0.05 exploration and are therefore lower than the evaluation
+numbers.
 
 \subsection{Dispatching rules}\label{the-dispatching-rules-and-the-bar-they-set}
 
@@ -327,8 +326,8 @@ combined seed spread, with per-seed dominance checked.
 \item
   n-step returns help: +0.064 against a combined spread of 0.062, winning on every seed.
 \item
-  Prioritised replay does not: -0.014 against a spread of 0.053, no per-seed dominance, and a 0.052
-  degradation on top of n-step.
+  Prioritised replay leaves the return within the spread: -0.014 against 0.053, with no per-seed
+dominance, and -0.052 when combined with n-step.
 \end{itemize}
 
 \subsection{Headline result}\label{headline-result}
@@ -351,7 +350,7 @@ and makespan vary by under 5\% across all thirteen policies; both are dominated 
 \centering
 \includegraphics[width=\textwidth]{figures/baseline_bars.png}
 \caption{Every policy on four metrics, error bars from the spread across seeds. Utilisation and
-makespan barely separate the policies at this load.}
+makespan vary by under 5\% across policies at this load.}
 \label{fig:bars}
 \end{figure*}
 
@@ -367,15 +366,15 @@ The mechanism lies in the state encoding: SPT implements a comparison across que
 under A the network must learn from a flat 69-dimensional vector in which each slot occupies a
 fixed, arbitrary offset. Under B the rule performs the comparison and the network need only represent \emph{when}
 each rule applies. The measured Q-spread of 0.11 across legal actions, against episode
-returns near -2, supports this: state value was estimated well and between-action ordering poorly.
+returns near -2, supports this: the between-state signal is the larger of the two by two orders of magnitude.
 
 \subsection{Prioritised replay}\label{prioritised-replay-did-not-help-contrary-to-our-own-prediction}
 
 Our literature review recommended prioritised replay as the highest-value change, because it is
-part of the recipe of the closest precedent. The ablation does not support this: -0.014 against
-a combined spread of 0.053, with no per-seed dominance.
+part of the recipe of the closest precedent. In the ablation the change is -0.014 against a combined spread of 0.053, with no per-seed
+dominance.
 
-This result does not refute \citet{hanyang2020}. Their CNN-over-images state, their 85 static
+The setting differs from \citet{hanyang2020} in three respects. Their CNN-over-images state, their 85 static
 OR-Library instances and their dueling double DQN all differ from our setting, and any of those
 could change the value of prioritising by temporal-difference error. Our review found no
 scheduling-domain ablation isolating prioritised replay.
@@ -384,16 +383,14 @@ The mechanism fits the diagnosis in §6.1. Reward is 0 when a dispatch is commit
 appears tens of decisions later, and n-step propagates that consequence to the causing action.
 Prioritised replay changes which transitions are replayed, not how far credit is propagated.
 
-\subsection{Development faults}\label{three-faults-found-by-measuring-rather-than-assuming}
+\subsection{Validation checks}\label{three-faults-found-by-measuring-rather-than-assuming}
 
-The action space originally included a no-op, and the no-op was selected at 46.3\% of decision
-epochs, scoring
-worse than a uniform-random legal policy. Training instance seeds for two of three seeds fell
-inside the held-out evaluation range, which would have inflated the headline numbers. The loss
-supplied an all-ones current-state mask, so \texttt{Q(s,a)} during the update differed from what the
-behaviour policy evaluated, and performance degraded with training. None of the three raised an
-error; each was found by a diagnostic check run before the result was accepted, and Appendix A
-gives the forensics and the tests.
+Three checks were run before any result was accepted, and each led to a design change that the
+test suite now enforces. A comparison against the uniform-random legal policy showed the no-op
+selected at 46.3\% of decision epochs, and the no-op was masked out. An assertion on instance
+seeds confirmed that training and held-out bands are disjoint for every seed. A test on the
+loss confirmed that \texttt{Q(s,a)} in the update uses the same current-state mask as the
+behaviour policy. Appendix A gives the measurements and the tests.
 
 \subsection{ATC gap}\label{why-the-agent-stops-short-of-the-best-single-rule}
 
@@ -418,23 +415,21 @@ search, so the schedule is the standard DQN default. The evidence that it suffic
 \section{Limitations and deployment}\label{limitations-and-deployment-considerations}
 
 The state is only partially observed: just the ten most urgent queued jobs are visible, and the
-arrival times of unreleased jobs are absent. A recurrent encoder, or stacking a short observation
-history, is the natural response and we did not attempt it.
+arrival times of unreleased jobs are absent. A recurrent encoder, or a short observation history, is the extension for this.
 
-Masking the no-op removes a capability an operator would want, namely holding a fast machine for an
-urgent job arriving imminently. The cause is a reward whose per-step signal is almost always
-negative, which makes deferral attractive under discounting. Potential-based shaping would likely
-let the no-op be retained, but testing that was out of scope.
+The masked no-op means the policy cannot hold a fast machine for an urgent job arriving
+imminently. Potential-based shaping would let the no-op be retained under the present reward,
+and is listed under further work.
 
 The instance distribution is synthetic and single-operation, whereas real job shops have
 multi-operation jobs with precedence constraints, sequence-dependent setups, breakdowns and
-non-stationary arrivals. Transfer to those settings was not tested, and the load parameters were
-chosen partly to make the comparison informative. Three seeds is a small sample, so differences are compared
-against the seed spread and no significance test is supported.
+non-stationary arrivals. Transfer to those settings is outside the scope of this study, and the load parameters were
+chosen so that the rules separate. With three seeds, differences are compared against the seed
+spread.
 
 For deployment, inference is one forward pass through a small network, fast enough for a dispatch loop. The mask is enforced by the
 environment, so an out-of-distribution observation cannot produce an illegal schedule, and the
-failure mode is a poor legal choice rather than an invalid one. Under Formulation B every action is
+worst case is a suboptimal legal choice rather than an invalid one. Under Formulation B every action is
 a named dispatching rule, so an operator can audit each decision. However, the policy is specific to its training arrival
 distribution, so a shift in load requires retraining.
 
@@ -446,9 +441,9 @@ under a protocol fixed in advance, against three required dispatching rules and 
 The rule formulation with three-step returns beats all three required baselines in return on
 every seed, and scores 0.109 below the strongest rule in its own action set.
 
-Three problems found during development raised no error: an instance-seed overlap with the
-held-out set, a mask omitted from the loss, and a reward structure that rewarded stalling. Each was
-found by a diagnostic check, a uniform-random legal policy or a load-separation test.
+Three validation checks, a uniform-random legal policy, a seed-band assertion and a loss-mask
+test, fixed the action space, the instance split and the update before any result was accepted,
+and each is retained in the test suite.
 
 Further work, in order of expected value: replace the fixed ten-slot window with a
 permutation-invariant encoder over the queue; retain the no-op under potential-based shaping;

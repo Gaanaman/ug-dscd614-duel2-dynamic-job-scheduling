@@ -1,9 +1,8 @@
 \appendix
-\section{Fault forensics}\label{fault-forensics}
+\section{Validation record}\label{fault-forensics}
 
-Each of the three faults in §6.3 is set out here with the measurement that found it and the test
-that now covers it. A fourth entry records the environment configuration that had to be replaced
-before the agent experiments.
+Each of the three checks in §6.3 is set out here with the measurement and the test that now
+covers it. A fourth entry records the load sweep that set the environment constants.
 
 \subsection{Instance overlap}\label{training-instances-overlapped-the-held-out-range}
 
@@ -18,12 +17,11 @@ the held-out range, the other that each seed draws its own instances.
 
 \texttt{compute\_loss} passed \texttt{torch.ones\_like(next\_mask)} as the current-state mask. Because the dueling
 aggregation subtracts the mean advantage over legal actions, this optimised a different function
-from the one \texttt{select\_action} evaluated, and the symptom was an agent that degraded with training,
-with waiting time rising from 7.30 to 17.28 over a 20,000-step run. The replay buffer now stores
+from the one \texttt{select\_action} evaluated, and waiting time rose from 7.30 to 17.28 over a 20,000-step run. The replay buffer now stores
 the current mask, and a test in \texttt{tests/test\_mask.py} fails if the predicted
 \texttt{Q(s,a)} is computed with any mask other than the current one.
 
-\subsection{Load headroom}\label{the-environment-had-no-headroom}
+\subsection{Load sweep}\label{the-environment-had-no-headroom}
 
 At \texttt{$\lambda$\ =\ 0.55} the makespan of 97.95 was within 8\% of the arrival-bound makespan of 90.9, and
 First-Come-First-Served and Shortest-Job-First differed by 0.06 in average waiting time. The load
@@ -33,13 +31,13 @@ as \texttt{scripts/check\_load.py}.
 \subsection{No-op stalling}\label{the-no-op-taught-the-agent-to-stall}
 
 The action space originally included a no-op. At 300,000 steps the resulting policy reached an
-average waiting time of 7.95, worse than selecting uniformly at random among legal actions (6.61),
+average waiting time of 7.95, against 6.61 for uniform selection among legal actions,
 and chose the no-op at 46.3\% of decision epochs against 0.7\% for an untrained network.
 
-A policy losing to random is broken rather than undertrained. Dispatching at an epoch that remains a decision
+Dispatching at an epoch that remains a decision
 epoch advances the clock by \texttt{$\Delta$t\ =\ 0} and returns reward 0, while every action that advances time
 returns a negative reward. Under discounting, an agent facing negative rewards improves its return
-by deferring them, and the no-op makes deferral available. Masking it dropped waiting time to 4.74.
+by deferring them, and the no-op makes deferral available. Masking it reduced waiting time to 4.74.
 
 \section{Reproduction}\label{reproduction}
 

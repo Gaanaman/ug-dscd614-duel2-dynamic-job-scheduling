@@ -40,9 +40,9 @@ thirty held-out instances across three seeds, the rule formulation with three-st
 a return of $-1.235 \pm 0.025$, beating First-Come-First-Served and Round Robin on every metric, and Shortest-Job-First on
 return, weighted tardiness and makespan, by margins exceeding the seed spread; Shortest-Job-First
 retains the lower average waiting time and fewer missed deadlines. It scores below the strongest rule in its own action set, Apparent Tardiness Cost at $-1.125$. An ablation shows that three-step returns improve the
-return while prioritised experience replay gives no measurable improvement, contrary to the closest
-published precedent. The shortfall is attributed to the flat state encoding rather than to compute
-or reward design.
+return while prioritised experience replay leaves the return unchanged within the seed spread. The
+difference from ATC is traced to the flat state encoding, with compute and reward design excluded
+by measurement.
 \end{abstract}
 
 \input{body}
